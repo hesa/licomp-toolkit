@@ -34,7 +34,7 @@ jobs:
       run: python3 setup.py build sdist
     - name: Lint
       run: |
-        flake8 licomp_osadl
+        flake8 licomp_toolkit
     - name: Install
       run: python3 setup.py install
     - name: Test
@@ -43,7 +43,7 @@ jobs:
         make test
     - name: CLI check
       run: |
-        tests/shell/test_cli.sh
+        tests/shell/test-cli.sh
 
   generate:
     runs-on: ubuntu-latest

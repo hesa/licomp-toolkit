@@ -20,8 +20,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  VERSION_FILE: licomp_osadl/config.py
-  MODULE_CODE: licomp_osadl/*
+  VERSION_FILE: licomp_toolkit/config.py
+  MODULE_CODE: licomp_toolkit/*
   PYPI_PUBLISH: 1
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    if: github.repository == 'hesa/licomp-osadl'
+    if: github.repository == 'hesa/licomp-toolkit'
 
     steps:
     - name: Checkout
@@ -41,8 +41,8 @@ jobs:
           echo "::error ::secrets.PYPI_API_TOKEN needs to be set for this action"
           exit 1
         fi
-        if [ -z "${{ secrets.LICOMP_OSADL }}" ]; then
-          echo "::error ::secrets.LICOMP_OSADL needs to be set for this action"
+        if [ -z "${{ secrets.LICOMP_TOOLKIT }}" ]; then
+          echo "::error ::secrets.LICOMP_TOOLKIT needs to be set for this action"
           exit 1
         fi
         if [ "${{ github.event_name == 'workflow_dispatch' }}" = "true" ]; then
@@ -114,7 +114,7 @@ jobs:
       with:
         tag: ${{ steps.version-bump.outputs.new_version }}
         generateReleaseNotes: true
-        token: ${{ secrets.LICOMP_OSADL }}
+        token: ${{ secrets.LICOMP_TOOLKIT }}
 
     - name: Publish package
       if: steps.release-needed.outputs.DO_RELEASE == 'true' && env.PYPI_PUBLISH == '1'
