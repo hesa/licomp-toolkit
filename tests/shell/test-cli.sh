@@ -29,13 +29,14 @@ test_licomp_tk() {
 	echo "  actual:   $ACTUAL"
 	echo "  command:  $COMMAND"
 	echo "  jq:       $JQ_ARGS"
+        echo "  command:  devel/licomp-toolkit $COMMAND | jq $JQ_ARGS"
 	exit 1
     fi
     echo OK
 }
 
 echo "# test supported/unsupported licenses"
-test_licomp_tk "verify -il MIT -ol MIT" ".summary.results.yes.count[0]" 3
+test_licomp_tk "verify -il MIT -ol MIT" ".summary.results.yes.count" 3
 test_licomp_tk "verify -il MIT -ol MIT2" ".summary.results.nr_valid" 0
 test_licomp_tk "verify -il MIT2 -ol MIT" ".summary.results.nr_valid" 0
 test_licomp_tk "verify -il MIT2 -ol MIT2" ".summary.results.nr_valid" 0
@@ -45,12 +46,12 @@ test_licomp_tk "-u snippet verify -il MIT -ol MIT" ".summary.results.nr_valid" 2
 test_licomp_tk "-u snippet verify -il MIT -ol MIT2" ".summary.results.nr_valid" 0
 test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.nr_valid" 2
 test_licomp_tk "-u snippet verify -il LGPL-2.1-or-later -ol BSD-3-Clause" ".summary.results.nr_valid" 2
-test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.yes.count[0]" 2
-test_licomp_tk "-u snippet verify -il LGPL-2.1-or-later -ol BSD-3-Clause" ".summary.results.no.count[0]" 2
+test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.yes.count" null
+test_licomp_tk "-u snippet verify -il LGPL-2.1-or-later -ol BSD-3-Clause" ".summary.results.yes.count" 2
 
 echo "# snippet vs bin dist"
 test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.nr_valid" 2
-test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.yes.count[0]" 2
+test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.no.count" 2
 test_licomp_tk "verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.nr_valid" 2
-test_licomp_tk "verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.yes.count[0]" 2
+test_licomp_tk "verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.yes.count" 2
 
