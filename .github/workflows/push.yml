@@ -43,7 +43,7 @@ jobs:
         make test
     - name: CLI check
       run: |
-        tests/shell/test_cli.sh
+        tests/shell/test-cli.sh
 
   generate:
     runs-on: ubuntu-latest
