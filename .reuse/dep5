@@ -1,0 +1,26 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: licomp_osadl
+Upstream-Contact: Henrik Sandklef <hesa@sandklef.com>
+Source: https://github.com/hesa/licomp_osadl
+
+
+Files: .github/**
+Copyright: Henrik Sandklef
+License: GPL-3.0-or-later
+
+Files: .gitignore
+Copyright: Henrik Sandklef
+License: GPL-3.0-or-later
+
+Files: .bumpversion.cfg
+Copyright: Henrik Sandklef
+License: GPL-3.0-or-later
+
+Files: requirements*.txt
+Copyright: Henrik Sandklef
+License: GPL-3.0-or-later
+
+Files: README.md
+Copyright: Henrik Sandklef
+License: GPL-3.0-or-later
+
