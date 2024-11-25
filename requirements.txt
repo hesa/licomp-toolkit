@@ -4,3 +4,4 @@ licomp-reclicense == 0.3.*
 licomp-dwheeler == 0.3.* 
 licomp-proprietary == 0.3.* 
 licomp-hermione == 0.3.* 
+foss-flame
