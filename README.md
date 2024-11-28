@@ -80,6 +80,7 @@ Installing from github assumes you already have `pip`installed.
 
 ```
 $ git clone https://github.com/hesa/licomp-toolkit
+$ pip install -r requirements.txt
 $ pip install -r requirements-dev.txt
 $ pip install .
 ```
