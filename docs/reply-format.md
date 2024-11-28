@@ -2,7 +2,7 @@
 
 # Example output (version 0.3)
 
-_Please, note that in the example below only one of the compatibility results from the compatibility resources is listed (`licomp_reclicense`). This is to save space by removing similar text._
+_Note: Please note that in the example below only one of the compatibility results from the compatibility resources is listed (`licomp_reclicense`). This is to save space by removing multiple text segments being similar._
 
 ```
 {
@@ -26,7 +26,7 @@ _Please, note that in the example below only one of the compatibility results fr
             "resource_version": "0.3.0",
             "resource_disclaimer": "The data or the output of the tools in this repository come with guarantee"
         },
-        // we have 
+        // we have removed the output from some of the licomp resources here
     },
     "summary": {
         "resources": [
