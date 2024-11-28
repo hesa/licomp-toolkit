@@ -28,7 +28,7 @@ Lists the usecases from the available Licomp resources. This may not be the comp
 Example:
 
 ```
-$ ./devel/licomp-toolkit supported-usecases
+$ licomp-toolkit supported-usecases
 ['snippet', 'library']
 ```
 
