@@ -59,7 +59,7 @@ Returns the compatibility status for the supplied outbound and inbound license. 
 
 Syntax:
 ```
-licomp-toolkit verify [-h] [--outbound-license OUT_LICENSE] [--inbound-license IN_LICENSE]
+$ licomp-toolkit verify [-h] [--outbound-license OUT_LICENSE] [--inbound-license IN_LICENSE]
 ```
 
 Example (omitting the reply):
