@@ -36,6 +36,11 @@ class LicompToolkitParser(LicompParser):
         licenses = self.licomp_toolkit.supported_licenses()
         return licenses, None
 
+    def supported_usecases(self, args):
+        usecases = self.licomp_toolkit.supported_usecases()
+        usecase_names = [UseCase.usecase_to_string(x) for x in usecases]
+        return usecase_names, None
+
     def supported_provisionings(self, args):
         provisionings = self.licomp_toolkit.supported_provisionings()
         provisioning_names = [Provisioning.provisioning_to_string(x) for x in provisionings]
@@ -44,7 +49,7 @@ class LicompToolkitParser(LicompParser):
         return provisioning_names, None
 
     def supported_resources(self, args):
-        return [f"{x.name()}:{x.version()}" for x in self.licomp_modules.values()], False
+        return [f"{x.name()}:{x.version()}" for x in self.licomp_toolkit.licomp_modules().values()], False
 
 
 def main():
