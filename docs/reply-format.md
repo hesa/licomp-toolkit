@@ -2,7 +2,7 @@
 
 # Example output (version 0.3)
 
-__Please, note that in the example below only one of the compatibility results from the compatibility resources is listed (`licomp_reclicense`). This is to save space by removing similar text.__
+_Please, note that in the example below only one of the compatibility results from the compatibility resources is listed (`licomp_reclicense`). This is to save space by removing similar text._
 
 ```
 {
@@ -121,8 +121,7 @@ Available compatibility statuses:
 * `unknown`
 * `unsupported`
 
-__Note: The above compatiblity status depend on the supplied usecase, provisioning, modification\
- (currently not implemeted, and discarded)__
+_Note: The above compatiblity status depend on the supplied usecase, provisioning, modification (currently not implemeted, and discarded)_
 
 ### results
 
