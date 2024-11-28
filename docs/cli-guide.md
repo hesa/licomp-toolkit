@@ -19,7 +19,7 @@ You can change this using corresponding options (see below).
 
 List of the supported licenses. This list contains all the supported licenses from each Licomp resource.
 
-_Note: A license is listed even if if it is not supported both compatiblity direction with another license._
+_Note: A license is listed even if it is not supported in both compatiblity directions with another license._
 
 ## supported-usecases
 
