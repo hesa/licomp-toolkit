@@ -68,7 +68,7 @@ For a more detailed guide to the `licomp-toolkit` Python api, please check out: 
 
 ## From pypi.org
 
-Licomp Toolkit is available at [pypi.org](https://pypi.org/): [https://pypi.org/project/licomp-toolkit/](https://pypi.org/project/licomp-toolkit/). To install it:
+Licomp Toolkit is available via [pypi.org](https://pypi.org/) at: [https://pypi.org/project/licomp-toolkit/](https://pypi.org/project/licomp-toolkit/). To install, simply do the following:
 
 ```
 $ pip install licomp-toolkit
