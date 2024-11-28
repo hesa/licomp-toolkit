@@ -6,7 +6,7 @@ Before you start using `licomp-toolkit` we suggest you read:
 
 # Defaults
 
-`licomp-toolkit` by default chose:
+`licomp-toolkit` by default uses:
 * usecase `library`- i.e. the licenses component is used as a library (e.g. linking to it)
 * provisioning `binary-distribution`
 * modification is not yet implemented
