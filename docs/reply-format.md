@@ -107,8 +107,8 @@ The supplied provisioning case.
 
 A map with the status (as key) and for each such a list of the licomp resources with that status.
 
-* `success`- contains a list of the licomp resources where the request was successfully answered 
-* failure- contains a list of the licomp resources where the request was not successfully answered 
+* `success` - contains a list of the licomp resources where the request was successfully answered 
+* `failure` - contains a list of the licomp resources where the request was not successfully answered 
 
 ### compatibility_statuses
 
