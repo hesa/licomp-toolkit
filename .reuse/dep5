@@ -20,7 +20,7 @@ Files: requirements*.txt
 Copyright: Henrik Sandklef
 License: GPL-3.0-or-later
 
-Files: README.md
+Files: README.md docs/*.md
 Copyright: Henrik Sandklef
 License: GPL-3.0-or-later
 
