@@ -71,7 +71,7 @@ _Note: Please note that in the example below only one of the compatibility resul
         "disclaimer": "This software and the data come with no gurantee. For more information read the disclaimers from the individual compatibility resources, and contact a lawyer to make sure your software is compliant."
     }
 }
-
+```
 
 # Reply details
 
