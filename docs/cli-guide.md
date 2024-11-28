@@ -57,7 +57,10 @@ $ licomp-toolkit supported-resources
 
 Returns the compatibility status for the supplied outbound and inbound license. The reply, by default, is in the format as specified in [Licomp Toolkit - Reply Format](reply-format.md).
 
-Syntax: `licomp-toolkit verify [-h] [--outbound-license OUT_LICENSE] [--inbound-license IN_LICENSE]
+Syntax:
+```
+licomp-toolkit verify [-h] [--outbound-license OUT_LICENSE] [--inbound-license IN_LICENSE]
+```
 
 Example (omitting the reply):
 ```
