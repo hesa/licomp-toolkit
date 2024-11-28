@@ -123,6 +123,8 @@ Available compatibility statuses:
 
 _Note: The above compatiblity status depend on the supplied usecase, provisioning, modification (currently not implemeted, and discarded)_
 
+Read [Licomp reply format](https://github.com/hesa/licomp/blob/main/docs/reply-format.md) for more information about the compatibility statuses.
+
 ### results
 
 Containsthe number of valid replies (see below) and a map with a summary of the compatibility statuses.
