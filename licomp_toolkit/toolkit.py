@@ -18,6 +18,8 @@ from licomp_dwheeler.dwheeler import LicompDw
 from licomp_hermione.hermione import LicompHermione
 
 from licomp_toolkit.config import disclaimer
+from licomp_toolkit.config import licomp_toolkit_version
+from licomp_toolkit.config import cli_name
 
 class LicompToolkitFormatter():
 
@@ -37,8 +39,8 @@ class JsonLicompToolkitFormatter():
 class LicompToolkit(Licomp):
 
     def __init__(self):
-        self.LICOMP_MODULES = {}
-        self.LICOMP_MODULE_NAMES = {
+        self.LICOMP_RESOURCES = {}
+        self.LICOMP_RESOURCE_NAMES = {
             "osadl": {
                 "package": "licomp_osadl.osadl",
                 "class": "LicompOsadl",
@@ -68,24 +70,24 @@ class LicompToolkit(Licomp):
         compatibilities["meta"] = {}
         compatibilities["meta"]['disclaimer'] = disclaimer
 
-    def licomp_modules(self):
-        if not self.LICOMP_MODULES:
+    def licomp_resources(self):
+        if not self.LICOMP_RESOURCES:
             for licomp in [LicompReclicense, LicompOsadl, LicompHermione, LicompProprietary, LicompDw]: # , LicompDw
                 licomp_instance = licomp()
-                self.LICOMP_MODULES[licomp_instance.name()] = licomp_instance
-        return self.LICOMP_MODULES
+                self.LICOMP_RESOURCES[licomp_instance.name()] = licomp_instance
+        return self.LICOMP_RESOURCES
 
     def __summarize_compatibility(self, compatibilities, outbound, inbound, usecase, provisioning):
         compatibilities["summary"] = {}
         statuses = {}
         compats = {}
-        compatibilities['nr_licomp'] = len(self.licomp_modules())
-        for module_name in self.licomp_modules():
-            compat = compatibilities["compatibilities"][module_name]
+        compatibilities['nr_licomp'] = len(self.licomp_resources())
+        for resource_name in self.licomp_resources():
+            compat = compatibilities["compatibilities"][resource_name]
             logging.debug(f': {compat["resource_name"]}')
             self.__add_to_list(statuses, compat['status'], compat['resource_name'])
             self.__add_to_list(compats, compat['compatibility_status'], compat['resource_name'])
-        compatibilities["summary"]["resources"] = [f'{x.name()}:{x.version()}' for x in self.licomp_modules().values()]
+        compatibilities["summary"]["resources"] = [f'{x.name()}:{x.version()}' for x in self.licomp_resources().values()]
         compatibilities["summary"]["outbound"] = outbound
         compatibilities["summary"]["inbound"] = inbound
         compatibilities["summary"]["usecase"] = UseCase.usecase_to_string(usecase)
@@ -126,10 +128,10 @@ class LicompToolkit(Licomp):
         compatibilities = {}
         compatibilities['compatibilities'] = {}
 
-        for module_name in self.licomp_modules():
-            module = self.licomp_modules()[module_name]
-            logging.debug(f'-- module: {module.name()}')
-            compat = module.outbound_inbound_compatibility(outbound, inbound, usecase, provisioning=provisioning)
+        for resource_name in self.licomp_resources():
+            resource = self.licomp_resources()[resource_name]
+            logging.debug(f'-- resource: {resource.name()}')
+            compat = resource.outbound_inbound_compatibility(outbound, inbound, usecase, provisioning=provisioning)
             compatibilities['compatibilities'][compat['resource_name']] = compat
 
         self.__summarize_compatibility(compatibilities, outbound, inbound, usecase, provisioning)
@@ -139,30 +141,42 @@ class LicompToolkit(Licomp):
 
     def supported_licenses(self):
         licenses = set()
-        for module in self.licomp_modules().values():
-            licenses.update(set(module.supported_licenses()))
+        for resource in self.licomp_resources().values():
+            licenses.update(set(resource.supported_licenses()))
         licenses = list(licenses)
         licenses.sort()
         return licenses
 
     def supported_provisionings(self):
         provisionings = set()
-        for module in self.licomp_modules().values():
-            provisionings.update(set(module.supported_provisionings()))
+        for resource in self.licomp_resources().values():
+            provisionings.update(set(resource.supported_provisionings()))
         return list(provisionings)
 
     def supported_usecases(self):
         usecases = set()
-        for module in self.licomp_modules().values():
-            usecases.update(set(module.supported_usecases()))
+        for resource in self.licomp_resources().values():
+            usecases.update(set(resource.supported_usecases()))
         return list(usecases)
 
     def disclaimer(self):
         return disclaimer
 
+    def version(self, verbose=False):
+        return licomp_toolkit_version
+
+    def versions(self, verbose=False):
+        versions = [f'{self.name()}:{self.version()}']
+        for resource in self.licomp_resources().values():
+            versions.append(f'- {resource.name()}:{resource.version()}')
+        return '\n'.join(versions)
+
+    def name(self):
+        return cli_name
+
 def __class_instance(package, class_name):
-    licomp_module = importlib.import_module(f'{package}')
-    licomp_class = getattr(licomp_module, class_name)
+    licomp_resource = importlib.import_resource(f'{package}')
+    licomp_class = getattr(licomp_resource, class_name)
     return licomp_class()
 
 def __check_api_version(subclass):
