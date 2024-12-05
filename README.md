@@ -6,7 +6,7 @@ resources.
 
 ## Introduction 
 
-Licomp toolkit is using the Licomp [Licomp](https://github.com/hesa/licomp) api to communicate with the Licomp resources. For a better understanding of Licomp we suggest you read:
+Licomp toolkit is using the [Licomp](https://github.com/hesa/licomp) api to communicate with the Licomp resources. For a better understanding of Licomp we suggest you read:
 
 * [Licomp basic concepts](https://github.com/hesa/licomp/#licomp-concepts)
 * [Licomp reply format](https://github.com/hesa/licomp/blob/main/docs/reply-format.md)
@@ -76,7 +76,7 @@ $ pip install licomp-toolkit
 
 ## From github
 
-Installing from github assumes you already have `pip`installed.
+Installing from github assumes you already have `pip` installed.
 
 ```
 $ git clone https://github.com/hesa/licomp-toolkit
