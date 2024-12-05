@@ -22,6 +22,9 @@ AUTHOR
 PROJECT SITE
   https://github.com/hesa/licomp-toolkit
 
+PYPI SITE
+  https://pypi.org/project/licomp-toolkit/
+
 REPORTING BUGS
   File a ticket at https://github.com/hesa/licomp-toolkit/issues
 
@@ -30,7 +33,7 @@ COPYRIGHT
   License GPL-3.0-or-later
 
 ATTRIBUTION
-  lci-toolkit is using the license compatibility matrix from toolkit.org.
+  lci-toolkit is using various license compatibility resources. Use the command supported-resources to list them.
 
 
 """
