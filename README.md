@@ -1,10 +1,19 @@
 # Licomp Toolkit
 
 Licomp toolkit is a license compatiblity tool using miscellaneous
-available compatibility resources and provides replies based on all
+available compatibility resources and provides replies from all
 resources.
 
 ## Introduction 
+
+Licomp can be used to help determine if a license is compatible with
+an outbound license. These compatibility checks needs context which is
+often missing. The context above must be provided to
+licomp-toolkit. In short the context is:
+
+* use case - how you use the licensed component
+* provisioning - how you provide the component to your user
+* modification - if you have modified the component
 
 Licomp toolkit is using the [Licomp](https://github.com/hesa/licomp) api to communicate with the Licomp resources. For a better understanding of Licomp we suggest you read:
 
@@ -13,12 +22,7 @@ Licomp toolkit is using the [Licomp](https://github.com/hesa/licomp) api to comm
 
 ## Licomp resources
 
-Licomp toolkit uses the following compatibility resources using the [Licomp](https://github.com/hesa/licomp) api:
-* [licomp-hermione](https://github.com/hesa/licomp-hermione) (`pip install licomp-hermione`)
-* [licomp-osadl](https://github.com/hesa/licomp-osadl) (`pip install licomp-osadl`)
-* [licomp-proprietary](https://github.com/hesa/licomp-proprietary) (`pip install licomp-proprietary`)
-* [licomp-reclicense](https://github.com/hesa/licomp-reclicense) (`pip install licomp-reclicense`)
-* [licomp-dwheeler](https://github.com/hesa/licomp-dwheeler)  (`pip install licomp-dwheeler`)
+Licomp toolkit uses the following compatibility resources using the [Licomp](https://github.com/hesa/licomp) api: [licomp-hermione](https://github.com/hesa/licomp-hermione), [licomp-osadl](https://github.com/hesa/licomp-osadl), [licomp-proprietary](https://github.com/hesa/licomp-proprietary), [licomp-reclicense](https://github.com/hesa/licomp-reclicense) and [licomp-dwheeler](https://github.com/hesa/licomp-dwheeler)
 
 # Using Licomp Toolkit
 
