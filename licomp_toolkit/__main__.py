@@ -28,8 +28,8 @@ class LicompToolkitParser(LicompParser):
         return self.flame.expression_license(lic_name, update_dual=False)['identified_license']
 
     def verify(self, args):
-        compatibilities = self.licomp_toolkit.outbound_inbound_compatibility(self.__normalize_license(args.in_license),
-                                                                             self.__normalize_license(args.out_license),
+        compatibilities = self.licomp_toolkit.outbound_inbound_compatibility(self.__normalize_license(args.out_license),
+                                                                             self.__normalize_license(args.in_license),
                                                                              args.usecase,
                                                                              args.provisioning)
         formatter = LicompToolkitFormatter.formatter(self.args.output_format)

@@ -75,12 +75,12 @@ test_licomp_tk "-u snippet verify -il MIT -ol MIT" ".summary.results.nr_valid" 2
 test_licomp_tk "-u snippet verify -il MIT -ol MIT2" ".summary.results.nr_valid" 0
 test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.nr_valid" 2
 test_licomp_tk "-u snippet verify -il LGPL-2.1-or-later -ol BSD-3-Clause" ".summary.results.nr_valid" 2
-test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.yes.count" null
-test_licomp_tk "-u snippet verify -il LGPL-2.1-or-later -ol BSD-3-Clause" ".summary.results.yes.count" 2
+test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.yes.count" 2
+test_licomp_tk "-u snippet verify -il LGPL-2.1-or-later -ol BSD-3-Clause" ".summary.results.yes.count" null
 
 echo "# snippet vs bin dist"
 test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.nr_valid" 2
-test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.no.count" 2
+test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.yes.count" 2
 test_licomp_tk "verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.nr_valid" 2
 test_licomp_tk "verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.yes.count" 2
 
