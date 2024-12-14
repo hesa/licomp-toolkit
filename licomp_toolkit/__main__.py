@@ -90,15 +90,15 @@ def main():
     parser_sr = subparsers.add_parser('supported-resources', help='List all supported Licomp resources')
     parser_sr.set_defaults(which="supported_resources", func=lct_parser.supported_resources)
 
-    parser_sl = subparsers.add_parser('supports-license', help='List the Licom resources supporting the license')
+    parser_sl = subparsers.add_parser('supports-license', help='List the Licomp resources supporting the license')
     parser_sl.set_defaults(which="supports_license", func=lct_parser.supports_license)
     parser_sl.add_argument("license")
 
-    parser_su = subparsers.add_parser('supports-usecase', help='List the Licom resources supporting the usecase')
+    parser_su = subparsers.add_parser('supports-usecase', help='List the Licomp resources supporting the usecase')
     parser_su.set_defaults(which="supports_usecase", func=lct_parser.supports_usecase)
     parser_su.add_argument("usecase")
 
-    parser_sp = subparsers.add_parser('supports-provisioning', help='List the Licom resources supporting the provisioning')
+    parser_sp = subparsers.add_parser('supports-provisioning', help='List the Licomp resources supporting the provisioning')
     parser_sp.set_defaults(which="supports_provisioning", func=lct_parser.supports_provisioning)
     parser_sp.add_argument("provisioning")
 
