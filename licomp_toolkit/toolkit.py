@@ -27,14 +27,40 @@ class LicompToolkitFormatter():
     def formatter(fmt):
         if fmt.lower() == 'json':
             return JsonLicompToolkitFormatter()
+        if fmt.lower() == 'text':
+            return TextLicompToolkitFormatter()
 
     def format_compatibilities(self, compat):
+        return None
+
+    def format_licomp_resources(self, licomp_resources):
         return None
 
 class JsonLicompToolkitFormatter():
 
     def format_compatibilities(self, compat):
         return json.dumps(compat, indent=4)
+
+    def format_licomp_resources(self, licomp_resources):
+        return json.dumps(licomp_resources, indent=4)
+
+class TextLicompToolkitFormatter():
+
+    def format_licomp_resources(self, licomp_resources):
+        return "\n".join(licomp_resources)
+
+    def format_compatibilities(self, compat):
+        summary = compat['summary']
+        output = []
+        nr_valid = summary['results']['nr_valid']
+        output.append(f'{nr_valid} succesfull response(s)')
+        if int(nr_valid) > 0:
+            output.append('Results:')
+            statuses = summary['compatibility_statuses']
+            for status in statuses.keys():
+                output.append(f'   {status}: {", ".join(statuses[status])}')
+        return "\n".join(output)
+
 
 class LicompToolkit(Licomp):
 
