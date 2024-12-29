@@ -61,16 +61,22 @@ class LicompToolkitParser(LicompParser):
         return formatter.format_licomp_resources(licomp_resources), None
 
     def supports_usecase(self, args):
-        usecase = UseCase.string_to_usecase(args.usecase)
-        licomp_resources = [f'{x.name()}:{x.version()}' for x in self.licomp_toolkit.licomp_resources().values() if usecase in x.supported_usecases()]
-        formatter = LicompToolkitFormatter.formatter(args.output_format)
-        return formatter.format_licomp_resources(licomp_resources), None
+        try:
+            usecase = UseCase.string_to_usecase(args.usecase)
+            licomp_resources = [f'{x.name()}:{x.version()}' for x in self.licomp_toolkit.licomp_resources().values() if usecase in x.supported_usecases()]
+            formatter = LicompToolkitFormatter.formatter(args.output_format)
+            return formatter.format_licomp_resources(licomp_resources), None
+        except KeyError:
+            return None, f'Use case "{args.usecase}" not supported. Supported use cases: {self.supported_usecases(args)[0]}'
 
     def supports_provisioning(self, args):
-        provisioning = Provisioning.string_to_provisioning(args.provisioning)
-        licomp_resources = [f'{x.name()}:{x.version()}' for x in self.licomp_toolkit.licomp_resources().values() if provisioning in x.supported_provisionings()]
-        formatter = LicompToolkitFormatter.formatter(args.output_format)
-        return formatter.format_licomp_resources(licomp_resources), None
+        try:
+            provisioning = Provisioning.string_to_provisioning(args.provisioning)
+            licomp_resources = [f'{x.name()}:{x.version()}' for x in self.licomp_toolkit.licomp_resources().values() if provisioning in x.supported_provisionings()]
+            formatter = LicompToolkitFormatter.formatter(args.output_format)
+            return formatter.format_licomp_resources(licomp_resources), None
+        except KeyError:
+            return None, f'Provisioning "{args.provisioning}" not supported. Supported provisionings: {self.supported_provisionings(args)[0]}'
 
     def versions(self, args):
         return self.licomp_toolkit.versions(), False

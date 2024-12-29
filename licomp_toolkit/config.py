@@ -33,7 +33,7 @@ COPYRIGHT
   License GPL-3.0-or-later
 
 ATTRIBUTION
-  lci-toolkit is using various license compatibility resources. Use the command supported-resources to list them.
+  licomp-toolkit is using various Licomp resources. Use the command supported-resources to list them.
 
 
 """
