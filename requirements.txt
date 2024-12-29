@@ -1,7 +1,7 @@
-licomp == 0.3.* 
-licomp-osadl == 0.3.* 
-licomp-reclicense == 0.3.* 
-licomp-dwheeler == 0.3.* 
-licomp-proprietary == 0.3.* 
-licomp-hermione == 0.3.* 
+licomp == 0.4.*
+licomp-osadl == 0.4.*
+licomp-reclicense == 0.4.*
+licomp-dwheeler == 0.4.*
+licomp-proprietary == 0.4.*
+licomp-hermione == 0.4.*
 foss-flame
