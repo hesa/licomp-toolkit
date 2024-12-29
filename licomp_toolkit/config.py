@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-licomp_toolkit_version = '0.4.0'
+licomp_toolkit_version = '0.4.1'
 my_supported_api_version = '0.4'
 
 cli_name = 'licomp-toolkit'
