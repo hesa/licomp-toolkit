@@ -16,6 +16,7 @@ from licomp_reclicense.reclicense import LicompReclicense
 from licomp_proprietary.proprietary import LicompProprietary
 from licomp_dwheeler.dwheeler import LicompDw
 from licomp_hermione.hermione import LicompHermione
+from licomp_gnuguide.gnuguide import GnuQuickGuideLicense
 
 from licomp_toolkit.config import disclaimer
 from licomp_toolkit.config import licomp_toolkit_version
@@ -98,7 +99,7 @@ class LicompToolkit(Licomp):
 
     def licomp_resources(self):
         if not self.LICOMP_RESOURCES:
-            for licomp in [LicompReclicense, LicompOsadl, LicompHermione, LicompProprietary, LicompDw]: # , LicompDw
+            for licomp in [LicompReclicense, LicompOsadl, LicompHermione, LicompProprietary, LicompDw, GnuQuickGuideLicense]: # , LicompDw
                 licomp_instance = licomp()
                 self.LICOMP_RESOURCES[licomp_instance.name()] = licomp_instance
         return self.LICOMP_RESOURCES
