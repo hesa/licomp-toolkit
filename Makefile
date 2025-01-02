@@ -26,7 +26,7 @@ test:
 	PYTHONPATH=. python3 -m pytest tests/python
 
 test-local:
-	PYTHONPATH=.:../licomp python3 -m pytest --log-cli-level=10 tests/
+	PYTHONPATH=.:../licomp:../licomp-reclicense:../licomp-osadl:../licomp-proprietary:../licomp-hermione:../licomp-dwheeler:../licomp-gnuguide python3 -m pytest --log-cli-level=10 tests/
 
 test-local-verbose:
 	PYTHONPATH=.:../licomp python3 -m pytest tests/python
@@ -38,9 +38,16 @@ reuse:
 	reuse lint
 
 check: clean reuse lint test check_version build
-	@echo 
-	@echo 
+	@echo
+	@echo
 	@echo "All tests passed :)"
-	@echo 
-	@echo 
+	@echo
+	@echo
+
+check-local: clean reuse lint test-local check_version build
+	@echo
+	@echo
+	@echo "All (local) tests passed :)"
+	@echo
+	@echo
 
