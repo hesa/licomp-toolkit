@@ -32,7 +32,7 @@ def test_provisioning_is_not_supported():
 def test_compat():
     ret = lt.outbound_inbound_compatibility("GPL-2.0-only", "BSD-3-Clause", UseCase.usecase_to_string(UseCase.LIBRARY), Provisioning.provisioning_to_string(Provisioning.BIN_DIST))
     logging.debug("ret: " + str(ret['summary']['results']))
-    assert ret['summary']['results']['yes']['count'] == 2
+    assert ret['summary']['results']['yes']['count'] == 3
 
 def test_incompat():
     ret = lt.outbound_inbound_compatibility("BSD-3-Clause", "GPL-2.0-only",  UseCase.usecase_to_string(UseCase.LIBRARY), Provisioning.provisioning_to_string(Provisioning.BIN_DIST))
@@ -43,7 +43,7 @@ def test_incompat():
     ret = lt.outbound_inbound_compatibility("BSD-3-Clause", "GPL-2.0-only",  UseCase.usecase_to_string(UseCase.LIBRARY), Provisioning.provisioning_to_string(Provisioning.WEBUI))
     logging.debug("ret: " + str(ret['summary']['statuses']))
     # all five resources fail on webui
-    assert len(ret['summary']['statuses']['failure']) == 5
+    assert len(ret['summary']['statuses']['failure']) == 6
 
 def test_disclaimer():
     logging.debug(f'check disclaimer')
