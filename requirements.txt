@@ -4,5 +4,5 @@ licomp-reclicense == 0.4.*
 licomp-dwheeler == 0.4.*
 licomp-proprietary == 0.4.*
 licomp-hermione == 0.4.*
-licomp-gnuguide == 0.4.*
+licomp-gnuguide == 0.3.*
 foss-flame
