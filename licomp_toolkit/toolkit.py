@@ -99,7 +99,7 @@ class LicompToolkit(Licomp):
 
     def licomp_resources(self):
         if not self.LICOMP_RESOURCES:
-            for licomp in [LicompReclicense, LicompOsadl, LicompHermione, LicompProprietary, LicompDw, GnuQuickGuideLicense]: # , LicompDw
+            for licomp in [LicompReclicense, LicompOsadl, LicompHermione, LicompProprietary, LicompDw, GnuQuickGuideLicense]:
                 licomp_instance = licomp()
                 self.LICOMP_RESOURCES[licomp_instance.name()] = licomp_instance
         return self.LICOMP_RESOURCES
