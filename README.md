@@ -22,7 +22,7 @@ Licomp toolkit is using the [Licomp](https://github.com/hesa/licomp) api to comm
 
 ## Licomp resources
 
-Licomp toolkit uses the following compatibility resources using the [Licomp](https://github.com/hesa/licomp) api: [licomp-hermione](https://github.com/hesa/licomp-hermione), [licomp-osadl](https://github.com/hesa/licomp-osadl), [licomp-proprietary](https://github.com/hesa/licomp-proprietary), [licomp-reclicense](https://github.com/hesa/licomp-reclicense) and [licomp-dwheeler](https://github.com/hesa/licomp-dwheeler)
+Licomp toolkit uses the following compatibility resources using the [Licomp](https://github.com/hesa/licomp) api: [licomp-hermione](https://github.com/hesa/licomp-hermione), [licomp-osadl](https://github.com/hesa/licomp-osadl), [licomp-proprietary](https://github.com/hesa/licomp-proprietary), [licomp-reclicense](https://github.com/hesa/licomp-reclicense), [licomp-dwheeler](https://github.com/hesa/licomp-dwheeler) and [licomp-gnuguide](https://github.com/hesa/licomp-gnuguide).
 
 # Using Licomp Toolkit
 
@@ -88,5 +88,3 @@ $ pip install -r requirements.txt
 $ pip install -r requirements-dev.txt
 $ pip install .
 ```
-
-
