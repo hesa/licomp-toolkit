@@ -1,4 +1,4 @@
-licomp == 0.4.*
+licomp == 0.5.*
 licomp-osadl == 0.4.*
 licomp-reclicense == 0.4.*
 licomp-dwheeler == 0.4.*
