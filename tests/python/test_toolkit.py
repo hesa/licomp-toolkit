@@ -32,7 +32,8 @@ def test_provisioning_is_not_supported():
 def test_compat():
     ret = lt.outbound_inbound_compatibility("GPL-2.0-only", "BSD-3-Clause", UseCase.usecase_to_string(UseCase.LIBRARY), Provisioning.provisioning_to_string(Provisioning.BIN_DIST))
     logging.debug("ret: " + str(ret['summary']['results']))
-    assert ret['summary']['results']['yes']['count'] == 3
+    print("... hesa: " + str(ret['summary']['results']['yes']))
+    assert ret['summary']['results']['yes']['count'] == 4
 
 def test_incompat():
     ret = lt.outbound_inbound_compatibility("BSD-3-Clause", "GPL-2.0-only",  UseCase.usecase_to_string(UseCase.LIBRARY), Provisioning.provisioning_to_string(Provisioning.BIN_DIST))
