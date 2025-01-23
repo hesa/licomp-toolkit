@@ -10,6 +10,7 @@ from licomp.interface import Licomp
 from licomp.interface import UseCase
 from licomp.interface import Provisioning
 from licomp.interface import LicompException
+from licomp.return_codes import ReturnCodes
 
 from licomp_osadl.osadl import LicompOsadl
 from licomp_reclicense.reclicense import LicompReclicense
@@ -37,6 +38,9 @@ class LicompToolkitFormatter():
     def format_licomp_resources(self, licomp_resources):
         return None
 
+    def format_licomp_versions(self, licomp_versions):
+        return None
+
 class JsonLicompToolkitFormatter():
 
     def format_compatibilities(self, compat):
@@ -44,6 +48,9 @@ class JsonLicompToolkitFormatter():
 
     def format_licomp_resources(self, licomp_resources):
         return json.dumps(licomp_resources, indent=4)
+
+    def format_licomp_versions(self, licomp_versions):
+        return json.dumps(licomp_versions, indent=4)
 
 class TextLicompToolkitFormatter():
 
@@ -62,6 +69,12 @@ class TextLicompToolkitFormatter():
                 output.append(f'   {status}: {", ".join(statuses[status])}')
         return "\n".join(output)
 
+    def format_licomp_versions(self, licomp_versions):
+        lt = 'licomp-toolkit'
+        res = [f'{lt}: {licomp_versions[lt]}']
+        for k, v in licomp_versions['licomp-resources'].items():
+            res.append(f'{k}: {v}')
+        return '\n'.join(res)
 
 class LicompToolkit(Licomp):
 
@@ -123,7 +136,6 @@ class LicompToolkit(Licomp):
         compatibilities["summary"]["compatibility_statuses"] = compats
 
         compat_number = len(compatibilities["summary"]["statuses"].get("success", []))
-
         logging.debug(f': {compatibilities["summary"]["statuses"]}')
         results = {}
         results['nr_valid'] = f'{compat_number}'
@@ -145,13 +157,20 @@ class LicompToolkit(Licomp):
 
     # override top class
     def outbound_inbound_compatibility(self, outbound, inbound, usecase, provisioning):
-
         logging.debug(f'{inbound} {outbound} ')
+
+        # Check usecase
         try:
             usecase = UseCase.string_to_usecase(usecase)
+        except KeyError:
+            raise LicompException(f'Usecase {usecase} not supported.', ReturnCodes.LICOMP_UNSUPPORTED_USECASE)
+
+        # Check provisioning
+        try:
             provisioning = Provisioning.string_to_provisioning(provisioning)
         except KeyError:
-            raise LicompException(f'Provisioning {provisioning} not supported.')
+            raise LicompException(f'Provisioning {provisioning} not supported.', ReturnCodes.LICOMP_UNSUPPORTED_PROVISIONING)
+
         compatibilities = {}
         compatibilities['compatibilities'] = {}
 
@@ -193,10 +212,13 @@ class LicompToolkit(Licomp):
         return licomp_toolkit_version
 
     def versions(self, verbose=False):
-        versions = [f'{self.name()}:{self.version()}']
+        resources = {}
         for resource in self.licomp_resources().values():
-            versions.append(f'- {resource.name()}:{resource.version()}')
-        return '\n'.join(versions)
+            resources[resource.name()] = resource.version()
+        return {
+            self.name(): self.version(),
+            'licomp-resources': resources,
+        }
 
     def name(self):
         return cli_name
