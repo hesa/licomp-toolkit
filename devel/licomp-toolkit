@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# SPDX-FileCopyrightText: 2024 Henrik Sandklef
+# SPDX-FileCopyrightText: 2025 Henrik Sandklef
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -14,4 +14,4 @@ then
     ARGS="verify -il MIT -ol MIT"
 fi     
 
-PYTHONPATH=.${EXTRA_PYTHONPATH} ./licomp_toolkit/__main__.py $* $ARGS
+PYTHONPATH=${EXTRA_PYTHONPATH}:${PYTHONPATH} ./licomp_toolkit/__main__.py $* $ARGS
