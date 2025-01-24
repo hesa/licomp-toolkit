@@ -21,7 +21,7 @@ test_licomp_tk() {
     JQ_ARGS="$2"
     EXP="$3"
 
-    echo -n "$COMMAND: "
+    printf "%-75s" "$COMMAND: "
     ACTUAL=$(licomp_tk $COMMAND | jq -r $JQ_ARGS)
 
     if [ "$EXP" != "$ACTUAL" ]
@@ -42,7 +42,7 @@ test_licomp_tk_text() {
     EXTRA_COMMAND="$2"
     EXP="$3"
 
-    echo -n "$COMMAND: "
+    printf "%-75s" "$COMMAND: "
     ACTUAL=$(echo PYTHONPATH=$IMPLEMENTATIONS:. ./licomp_toolkit/__main__.py $COMMAND $EXTRA_COMMAND | bash)
 
     if [ "$EXP" != "$ACTUAL" ]
@@ -63,14 +63,14 @@ test_version()
     echo "# test version"
     test_licomp_tk_text "--version" "" "$LT_VERSION"
     test_licomp_tk_text "--name" "" licomp-toolkit
-    test_licomp_tk_text "versions" "| head -1" "licomp-toolkit:$LT_VERSION"
-    test_licomp_tk_text "versions" "| wc -l" "7"
+    test_licomp_tk_text " -of text versions" "| head -1" "licomp-toolkit: $LT_VERSION"
+    test_licomp_tk_text " -of text versions" "| wc -l" "7"
 }
 
 test_supp_unsupp()
 {
     echo "# test supported/unsupported licenses"
-    test_licomp_tk "verify -il MIT -ol MIT" ".summary.results.yes.count" 4
+    test_licomp_tk "verify -il MIT -ol MIT" ".summary.results.yes.count" 5
     test_licomp_tk "verify -il MIT -ol MIT2" ".summary.results.nr_valid" 0
     test_licomp_tk "verify -il MIT2 -ol MIT" ".summary.results.nr_valid" 0
     test_licomp_tk "verify -il MIT2 -ol MIT2" ".summary.results.nr_valid" 0
@@ -79,21 +79,21 @@ test_supp_unsupp()
 test_snippets()
 {
     echo "# test snippets only"
-    test_licomp_tk "-u snippet verify -il MIT -ol MIT" ".summary.results.nr_valid" 2
+    test_licomp_tk "-u snippet verify -il MIT -ol MIT" ".summary.results.nr_valid" 1
     test_licomp_tk "-u snippet verify -il MIT -ol MIT2" ".summary.results.nr_valid" 0
-    test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.nr_valid" 2
-    test_licomp_tk "-u snippet verify -il LGPL-2.1-or-later -ol BSD-3-Clause" ".summary.results.nr_valid" 2
-    test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.yes.count" 2
+    test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.nr_valid" 1
+    test_licomp_tk "-u snippet verify -il LGPL-2.1-or-later -ol BSD-3-Clause" ".summary.results.nr_valid" 1
+    test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.yes.count" 1
     test_licomp_tk "-u snippet verify -il LGPL-2.1-or-later -ol BSD-3-Clause" ".summary.results.yes.count" null
 }
 
 test_snippet_bindist()
 {
     echo "# snippet vs bin dist"
-    test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.nr_valid" 2
-    test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.yes.count" 2
-    test_licomp_tk "verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.nr_valid" 3
-    test_licomp_tk "verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.yes.count" 3
+    test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.nr_valid" 1
+    test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.yes.count" 1
+    test_licomp_tk "verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.nr_valid" 4
+    test_licomp_tk "verify -il BSD-3-Clause -ol LGPL-2.1-or-later" ".summary.results.yes.count" 4
 }
 
 test_supports_license()
@@ -114,8 +114,8 @@ test_supports_provisioning()
 test_supports_usecase()
 {
     echo "# supports usecase"
-    test_licomp_tk_text " -of text supports-usecase snippet" " | wc -l" 2
-    test_licomp_tk_text " -of text supports-usecase library" " | wc -l " 4
+    test_licomp_tk_text " -of text supports-usecase snippet" " | wc -l" 1
+    test_licomp_tk_text " -of text supports-usecase library" " | wc -l " 5
 }
 
 
