@@ -16,13 +16,16 @@ requirements_dev = []
 with open('requirements-dev.txt') as f:
     requirements_dev = f.read().splitlines()
 
+with open("README.md") as f:
+    _long_description = f.read()
+
 setuptools.setup(
     name='licomp_toolkit',
     version=licomp_toolkit_version,
     author="Henrik Sanklef",
     author_email="hesa@sandklef.com",
     description=description.replace('\n', ' '),
-    long_description=description,
+    long_description=_long_description,
     long_description_content_type="text/markdown",
     license_files=('LICENSES/GPL-3.0-or-later.txt',),
     url="https://github.com/hesa/licomp-toolkit",
