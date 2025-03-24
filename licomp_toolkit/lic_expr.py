@@ -147,3 +147,113 @@ class LicenseExpressionParser():
         raise Exception("Bottom reached")
 
 
+        
+class LicenseExpressionChecker():
+
+    def outbound_inbound_compatibility(self, outbound, lic):
+        licomp = LicompToolkit()
+        print("out: " + str(outbound))
+        print("in:  " + str(lic))
+        return licomp.outbound_inbound_compatibility(outbound,
+                                                     lic,
+                                                     usecase="library",
+                                                     provisioning="binary-distribution")
+        
+    def __compatibility_status(self, compatibility):
+        status = compatibility['summary']['results']
+        nr_valid = status['nr_valid']
+
+        rets = []
+        for ret in status:
+            if ret == 'nr_valid':
+                continue
+            rets.append(ret)
+
+        print("________________________________________________status: " + str(status))
+        print("________________________________________________status: " + str(rets))
+
+        # status: {'nr_valid': '5', 'yes': {'count': 5, 'percent': 100.0}}
+
+        if len(rets) == 1:
+            print("RETURN: " + str(rets[0]))
+            return rets[0]
+
+        print("RETURN: " + str(rets))
+        print("RETURN: " + str(compatibility))
+        return "yes"
+    
+    def check_compatibility(self, outbound, parsed_expression, detailed_report=False):
+        if parsed_expression['type'] == 'license':
+            print(f' license: {parsed_expression}')
+            lic = parsed_expression['license']
+            compat = self.outbound_inbound_compatibility(outbound, lic)
+            parsed_expression['compatibility'] = self.__compatibility_status(compat)
+            if detailed_report:
+                parsed_expression['compatibility_details'] = compat
+            parsed_expression['outbound'] = outbound
+            print("Added compat: " + str(compat))
+
+            return parsed_expression
+        else:
+            operator = parsed_expression['operator']
+            operands = parsed_expression['operands']
+
+            for operand in operands:
+                print(f'hi yall {operator}: {operand}')
+                self.check_compatibility(outbound, operand, detailed_report=detailed_report)
+                #compat = summarise_compatibilities(operator, operand)
+                #operand['compatibility'] = "compat"
+                #print("Added compat: " + str(compat))
+                operand['outbound'] = outbound
+
+            parsed_expression["outbound"] = outbound
+            parsed_expression["compatibility"] = self.summarise_compatibilities(operator, operands)
+            return parsed_expression
+    
+    def __init_summary(self, operands):
+        summary = {
+            "yes": 0,
+            "no": 0,
+            "depends": 0,
+            "unknown": 0,
+        }
+        for operand in operands:
+            print("_init_summary: " + str(operand))
+            compat = operand['compatibility']
+            summary[compat] = summary[compat] + 1
+        return summary
+
+    def __summarise_compatibilities_and(self, operands):
+        nr_operands = len(operands)
+        for operand in operands:
+            print("OP: " + str(operand))
+        summary = self.__init_summary(operands)
+        #print(json.dumps(summary, indent=4))
+        print("len: " + str(nr_operands))
+
+        if summary['no'] != 0:
+            return 'no'
+
+        if summary['yes'] == nr_operands:
+            return "yes"
+
+        return "no"
+
+
+    def __summarise_compatibilities_or(self, operands):
+        nr_operands = len(operands)
+        summary = self.__init_summary(operands)
+
+        if summary['yes'] != 0:
+            return 'yes'
+
+        return "no"
+
+
+    def summarise_compatibilities(self, operator, operands):
+        return {
+            AND: self.__summarise_compatibilities_and,
+            OR: self.__summarise_compatibilities_or
+        }[operator](operands)
+
+
