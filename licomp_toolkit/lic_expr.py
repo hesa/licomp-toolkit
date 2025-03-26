@@ -257,3 +257,101 @@ class LicenseExpressionChecker():
         }[operator](operands)
 
 
+class ExpressionExpressionChecker():
+
+    def __init__(self):
+        self.le_checker = LicenseExpressionChecker()
+        self.le_parser = LicenseExpressionParser()
+
+    def __parsed_expression_to_name(self, parsed_expression):
+        return parsed_expression[parsed_expression['type']]
+    
+    def check_compatibility(self, outbound, inbound, detailed_report=False):
+        inbound_parsed = self.le_parser.parse_license_expression(inbound)
+        
+        outbound_parsed = self.le_parser.parse_license_expression(outbound)
+        
+        compatibility_report = self.__check_compatibility(outbound_parsed,
+                                                          inbound_parsed,
+                                                          detailed_report)
+
+        return {
+            'inbound': inbound,
+            'outbound': outbound,
+            'compatibility_report': compatibility_report
+        }
+    
+
+        
+    def __check_compatibility(self, outbound_parsed, inbound_parsed, detailed_report=False):
+#        inbound_parsed = parser.parse_license_expression(inbound_expression)
+#        outbound_parsed = parser.parse_license_expression(outbound_expression)
+        
+        checked = None
+        outbound_type = outbound_parsed['type']
+        inbound_type = inbound_parsed['type']
+        if outbound_type == 'license':
+            print(f' license: {outbound_parsed}')
+            outbound_parsed_license = outbound_parsed['license']
+            # Check if:
+            #    outbound license
+            #    is compatible with
+            #    inbound license
+            compat = self.le_checker.check_compatibility(outbound_parsed_license,
+                                                         inbound_parsed,
+                                                         detailed_report)
+
+
+            outbound_parsed['compatibility'] = compat['compatibility']
+            # TODO: bring back details
+            # outbound_parsed['compatibility_details'] = compat
+
+            return compat
+            
+        if outbound_type == 'operator':
+            outbound_parsed_operator = outbound_parsed['operator']
+            print(f' operator: {outbound_parsed_operator}')
+            operator = outbound_parsed['operator']
+            operands = outbound_parsed['operands']
+
+            for operand in operands:
+                print(f'hi yall {operator}: {operand}')
+                
+                # Check if:
+                #    operand from outbound license
+                #    is compatible with
+                #    inbound license
+                inbound_compat = self.__check_compatibility(operand,
+                                                            inbound_parsed,
+                                                            detailed_report)
+                #operand['compatibility_details'] = inbound_compat
+                
+                operand['inbound_compatibility'] = inbound_parsed
+                operand['compatibility'] = inbound_compat['compatibility']
+                
+            outbound_parsed['compatibility'] = self.le_checker.summarise_compatibilities(operator, operands)
+            
+            # TODO: bring back details
+            #outbound_parsed['compatibility_details'] = None
+
+
+            return outbound_parsed
+
+        return " WOOPS"
+
+print("hola")
+#parser = LicenseExpressionParser()
+
+expr_checker = ExpressionExpressionChecker()
+
+inbound = "MIT OR Apache-2.0"
+outbound = "GPL-2.0-only AND BSD-2-Clause"
+checked = expr_checker.check_compatibility(outbound,
+                                           inbound,
+                                           detailed_report=False)
+
+print("------------------------------------------")
+print()
+print()
+print()
+print(json.dumps(checked, indent=4))
