@@ -1,10 +1,14 @@
-import json 
+# SPDX-FileCopyrightText: 2025 Henrik Sandklef
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
 
-import logging
+import json
+
+# import logging
 from license_expression import get_spdx_licensing
 from licomp_toolkit.toolkit import LicompToolkit
-from licomp.interface import UseCase
-from licomp.interface import Provisioning
+# from licomp.interface import UseCase
+# from licomp.interface import Provisioning
 
 AND = "AND"
 OR = "OR"
@@ -20,7 +24,7 @@ class LicenseExpressionParser():
 
     def parse_license_expression(self, expression):
         print(" ---------------------- " + expression + "-------------------------")
-        p = self.__parse_expression(self.licensing.parse(expression).pretty().replace('\n',' '))
+        p = self.__parse_expression(self.licensing.parse(expression).pretty().replace('\n', ' '))
         print(" ---------------------- " + expression + "------------------------->> \n" + json.dumps(p, indent=4))
         return p
 
@@ -52,7 +56,7 @@ class LicenseExpressionParser():
         operand_size = 1
         print("identify idx: " + expression[op_size:])
         for c in expression[op_size:]:
-            #print("at " + c + ": " + str(operand_size))
+            # print("at " + c + ": " + str(operand_size))
             operand_size += 1
             if c == '(':
                 left_parens += 1
@@ -62,18 +66,18 @@ class LicenseExpressionParser():
             if left_parens == 0:
                 break
 
-        rest = expression[op_size:operand_size+1]
-        remains = expression[operand_size-1]
+        rest = expression[op_size:operand_size + 1]
+        remains = expression[operand_size - 1]
         print("expression : " + expression)
         print("operands   : " + rest)
         print("remains    : " + remains)
         return rest, remains
-    
+
     def is_close(self, expression):
-        return expression.startswith(CLOSE_PARENTHESIS)
+        return expression.startswith(self.CLOSE_PARENTHESIS)
 
     def __cleanup_license(self, operand):
-        stripped_operand=operand.strip()
+        stripped_operand = operand.strip()
         print("OPERself.AND: " + operand)
 
         if self.__is_license_with_exception(operand):
@@ -82,16 +86,15 @@ class LicenseExpressionParser():
             trimmed_operand = stripped_operand.replace(f"{self.LICENSE_SYMBOL}('", '', 1)
     #    print("TRIMMED: " + trimmed_operand)
         closing_paren_index = trimmed_operand.find(")")
-        #print("    CLEANEDUP op:  >" + operand + "<")
-        print("    CLEANEDUP to:  >" + trimmed_operand + "<")
-        print("    CLEANEDUP idx: " + str(closing_paren_index))
-        op = trimmed_operand[:closing_paren_index-1]
-        remains = trimmed_operand[closing_paren_index+1:].strip()
+        # print("    CLEANEDUP to:  >" + trimmed_operand + "<")
+        # print("    CLEANEDUP idx: " + str(closing_paren_index))
+        op = trimmed_operand[:closing_paren_index - 1]
+        remains = trimmed_operand[closing_paren_index + 1:].strip()
         print("    CLEANEDUP rem:>" + remains)
         if remains.startswith(","):
             remains = remains[1:]
-        print("    CLEANEDUP op:  " + op)
-        print("    CLEANEDUP rem:>" + remains + "<")
+        # print("    CLEANEDUP op:  " + op)
+        # print("    CLEANEDUP rem:>" + remains + "<")
         return op, remains.strip()
 
     def __parse_expression(self, expression):
@@ -146,8 +149,6 @@ class LicenseExpressionParser():
 
         raise Exception("Bottom reached")
 
-
-        
 class LicenseExpressionChecker():
 
     def outbound_inbound_compatibility(self, outbound, lic):
@@ -158,10 +159,10 @@ class LicenseExpressionChecker():
                                                      lic,
                                                      usecase="library",
                                                      provisioning="binary-distribution")
-        
+
     def __compatibility_status(self, compatibility):
         status = compatibility['summary']['results']
-        nr_valid = status['nr_valid']
+        # nr_valid = status['nr_valid']
 
         rets = []
         for ret in status:
@@ -181,7 +182,7 @@ class LicenseExpressionChecker():
         print("RETURN: " + str(rets))
         print("RETURN: " + str(compatibility))
         return "yes"
-    
+
     def check_compatibility(self, outbound, parsed_expression, detailed_report=False):
         if parsed_expression['type'] == 'license':
             print(f' license: {parsed_expression}')
@@ -201,15 +202,15 @@ class LicenseExpressionChecker():
             for operand in operands:
                 print(f'hi yall {operator}: {operand}')
                 self.check_compatibility(outbound, operand, detailed_report=detailed_report)
-                #compat = summarise_compatibilities(operator, operand)
-                #operand['compatibility'] = "compat"
-                #print("Added compat: " + str(compat))
+                # compat = summarise_compatibilities(operator, operand)
+                # operand['compatibility'] = "compat"
+                # print("Added compat: " + str(compat))
                 operand['outbound'] = outbound
 
             parsed_expression["outbound"] = outbound
             parsed_expression["compatibility"] = self.summarise_compatibilities(operator, operands)
             return parsed_expression
-    
+
     def __init_summary(self, operands):
         summary = {
             "yes": 0,
@@ -228,7 +229,6 @@ class LicenseExpressionChecker():
         for operand in operands:
             print("OP: " + str(operand))
         summary = self.__init_summary(operands)
-        #print(json.dumps(summary, indent=4))
         print("len: " + str(nr_operands))
 
         if summary['no'] != 0:
@@ -239,16 +239,13 @@ class LicenseExpressionChecker():
 
         return "no"
 
-
     def __summarise_compatibilities_or(self, operands):
-        nr_operands = len(operands)
         summary = self.__init_summary(operands)
 
         if summary['yes'] != 0:
             return 'yes'
 
         return "no"
-
 
     def summarise_compatibilities(self, operator, operands):
         return {
@@ -265,12 +262,12 @@ class ExpressionExpressionChecker():
 
     def __parsed_expression_to_name(self, parsed_expression):
         return parsed_expression[parsed_expression['type']]
-    
+
     def check_compatibility(self, outbound, inbound, detailed_report=False):
         inbound_parsed = self.le_parser.parse_license_expression(inbound)
-        
+
         outbound_parsed = self.le_parser.parse_license_expression(outbound)
-        
+
         compatibility_report = self.__check_compatibility(outbound_parsed,
                                                           inbound_parsed,
                                                           detailed_report)
@@ -280,16 +277,10 @@ class ExpressionExpressionChecker():
             'outbound': outbound,
             'compatibility_report': compatibility_report
         }
-    
 
-        
     def __check_compatibility(self, outbound_parsed, inbound_parsed, detailed_report=False):
-#        inbound_parsed = parser.parse_license_expression(inbound_expression)
-#        outbound_parsed = parser.parse_license_expression(outbound_expression)
-        
-        checked = None
+
         outbound_type = outbound_parsed['type']
-        inbound_type = inbound_parsed['type']
         if outbound_type == 'license':
             print(f' license: {outbound_parsed}')
             outbound_parsed_license = outbound_parsed['license']
@@ -301,13 +292,12 @@ class ExpressionExpressionChecker():
                                                          inbound_parsed,
                                                          detailed_report)
 
-
             outbound_parsed['compatibility'] = compat['compatibility']
             # TODO: bring back details
             # outbound_parsed['compatibility_details'] = compat
 
             return compat
-            
+
         if outbound_type == 'operator':
             outbound_parsed_operator = outbound_parsed['operator']
             print(f' operator: {outbound_parsed_operator}')
@@ -315,8 +305,6 @@ class ExpressionExpressionChecker():
             operands = outbound_parsed['operands']
 
             for operand in operands:
-                print(f'hi yall {operator}: {operand}')
-                
                 # Check if:
                 #    operand from outbound license
                 #    is compatible with
@@ -324,23 +312,21 @@ class ExpressionExpressionChecker():
                 inbound_compat = self.__check_compatibility(operand,
                                                             inbound_parsed,
                                                             detailed_report)
-                #operand['compatibility_details'] = inbound_compat
-                
+                # operand['compatibility_details'] = inbound_compat
+
                 operand['inbound_compatibility'] = inbound_parsed
                 operand['compatibility'] = inbound_compat['compatibility']
-                
-            outbound_parsed['compatibility'] = self.le_checker.summarise_compatibilities(operator, operands)
-            
-            # TODO: bring back details
-            #outbound_parsed['compatibility_details'] = None
 
+            outbound_parsed['compatibility'] = self.le_checker.summarise_compatibilities(operator, operands)
+
+            # TODO: bring back details
 
             return outbound_parsed
 
         return " WOOPS"
 
-print("hola")
-#parser = LicenseExpressionParser()
+# parser = LicenseExpressionParser()
+
 
 expr_checker = ExpressionExpressionChecker()
 
