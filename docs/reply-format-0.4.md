@@ -6,11 +6,21 @@ inbound license given a specific context.
 
 This format extends to looking at expressions (e.g. `MIT OR BSD-3-Clause`) instead. This new format will be much more complex so we will define sub formats, which will be used by the top format.
 
-## Licomp Toolkit - Context Format
+## Licomp Toolkit - Request Information Format
 
-## Licomp Toolkit - License Expression Format
+This is only a compilation of the request as received from the user.
 
-## Licomp Toolkit - Expression Expression Format
+{
+  "outbound": "GPL-2.0-only",
+  "inbound": "MIT",
+  "usecase": "library",
+  "provisioning": "binary-distribution",
+  "modification": "unmodified"
+}
+
+## Licomp Toolkit - License -> Expression Format
+
+## Licomp Toolkit - Expression -> Expression Format
 
 ## Licomp Toolkit - Summary Format
 
