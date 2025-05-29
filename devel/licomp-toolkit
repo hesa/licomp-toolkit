@@ -4,14 +4,16 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+SCRIPT_DIR=$(dirname ${BASH_SOURCE[0]})/../
+
 if [ "$1" = "--local" ]
 then
     shift
-    EXTRA_PYTHONPATH=:../licomp:../licomp-osadl:../licomp-reclicense:../licomp-proprietary:../licomp-hermione:../licomp-dwheeler
+    EXTRA_PYTHONPATH=:${SCRIPT_DIR}/../licomp:${SCRIPT_DIR}/../licomp-osadl:${SCRIPT_DIR}/../licomp-reclicense:${SCRIPT_DIR}/../licomp-proprietary:${SCRIPT_DIR}/../licomp-hermione:${SCRIPT_DIR}/../licomp-dwheeler
 fi     
 if [ "$1" = "" ]
 then
     ARGS="verify -il MIT -ol MIT"
 fi     
 
-PYTHONPATH=${EXTRA_PYTHONPATH}:${PYTHONPATH} ./licomp_toolkit/__main__.py $* $ARGS
+PYTHONPATH=${EXTRA_PYTHONPATH}:${PYTHONPATH} ${SCRIPT_DIR}/licomp_toolkit/__main__.py $* $ARGS
