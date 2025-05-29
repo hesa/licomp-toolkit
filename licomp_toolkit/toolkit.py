@@ -38,6 +38,9 @@ class LicompToolkitFormatter():
     def format_licomp_resources(self, licomp_resources):
         return None
 
+    def format_licomp_licenses(self, licomp_licenses):
+        return None
+
     def format_licomp_versions(self, licomp_versions):
         return None
 
@@ -49,13 +52,19 @@ class JsonLicompToolkitFormatter():
     def format_licomp_resources(self, licomp_resources):
         return json.dumps(licomp_resources, indent=4)
 
-    def format_licomp_versions(self, licomp_versions):
+    def format_licomp_licenses(self, licomp_resources):
+        return json.dumps(licomp_licenses, indent=4)
+
+    def format_licomp_versions(self, liczomp_versions):
         return json.dumps(licomp_versions, indent=4)
 
 class TextLicompToolkitFormatter():
 
     def format_licomp_resources(self, licomp_resources):
         return "\n".join(licomp_resources)
+
+    def format_licomp_licenses(self, licomp_licenses):
+        return "\n".join(licomp_licenses)
 
     def format_compatibilities(self, compat):
         summary = compat['summary']
