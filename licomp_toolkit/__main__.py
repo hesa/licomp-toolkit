@@ -50,7 +50,8 @@ class LicompToolkitParser(LicompParser):
 
     def supported_licenses(self, args):
         licenses = self.licomp_toolkit.supported_licenses()
-        return licenses, ReturnCodes.LICOMP_OK.value, None
+        formatter = LicompToolkitFormatter.formatter(args.output_format)
+        return formatter.format_licomp_resources(licenses), ReturnCodes.LICOMP_OK.value, None
 
     def supported_usecases(self, args):
         usecases = self.licomp_toolkit.supported_usecases()
@@ -65,7 +66,8 @@ class LicompToolkitParser(LicompParser):
         return provisioning_names, ReturnCodes.LICOMP_OK.value, None
 
     def supported_resources(self, args):
-        return [f'{x.name()}:{x.version()}' for x in self.licomp_toolkit.licomp_resources().values()], ReturnCodes.LICOMP_OK, False
+        formatter = LicompToolkitFormatter.formatter(args.output_format)
+        return formatter.format_licomp_resources([f'{x.name()}:{x.version()}' for x in self.licomp_toolkit.licomp_resources().values()]), ReturnCodes.LICOMP_OK.value, False
 
     def supports_license(self, args):
         lic = args.license
