@@ -1,0 +1,71 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "$id" : "http://spdx.org/rdf/terms",
+  "title" : "SPDX 2.2",
+  "type" : "object",
+  "properties" : {
+    "compatibility_report": {
+      "type" : "object",
+      "$ref": "#/$defs/compatibility_object"
+    },
+    "outbound" : {"type" : "string", "description" : ""     },
+    "inbound" : { "type" : "string", "description" : ""    },
+    "usecase" : { "type" : "string", "description" : ""    },
+    "provisioning" : { "type" : "string", "description" : ""    },
+    "modification" : { "type" : "string", "description" : ""    },
+    "compatibility" : { "type" : "string", "description" : ""    }
+  },
+  "required" : [ "compatibility_report", "compatibility", "outbound", "inbound" , "usecase" ],
+  "additionalProperties" : false,
+  "$defs": {
+    "compatibility_object": {
+      "type" : "object",
+      "oneOf": [
+        {
+          "properties": {
+            "compatibility": { "type": "string" },
+            "compatibility_type": { "enum": [ "license" ] },
+            "compatibility_check": { "type": "string" },
+            "inbound_license": { "type": "string" },
+            "outbound_license": { "type": "string" },
+            "compatibility_object": {
+              "type" : "object",
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/compatibility_object"
+                },
+                {
+                  "properties": {}
+                }
+              ]
+            }
+          },
+          "required": [ "compatibility", "compatibility_type", "compatibility_check", "inbound_license" , "outbound_license", "compatibility_object"],
+          "additionalProperties" : false
+        },
+        {
+          "properties": {
+            "compatibility": { "type": "string" },
+            "compatibility_type": { "enum": [ "expression" ] },
+            "compatibility_check": { "type": "string" },
+            "inbound_license": { "type": "string" },
+            "outbound_license": { "type": "string" },
+            "operator": { "enum": [ "AND", "OR" ] },
+            "operands": {
+              "type": "array",
+              "items": {
+                "compatibility_object": {
+                  "type" : "object",
+                  "$ref": "#/$defs/compatibility_object"
+                },
+                "compatibility": { "type": "string" }
+              }
+            }
+          },
+          "required": [ "compatibility", "compatibility_type", "compatibility_check", "inbound_license" , "outbound_license" , "operator", "operands" ],
+          "additionalProperties" : false
+        }
+      ]
+    }
+  }
+}
