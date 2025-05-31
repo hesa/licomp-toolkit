@@ -1,8 +1,11 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: licomp_osadl
+Upstream-Name: licomp_toolkit
 Upstream-Contact: Henrik Sandklef <hesa@sandklef.com>
-Source: https://github.com/hesa/licomp_osadl
+Source: https://github.com/hesa/licomp_toolkit
 
+Files: licomp_toolkit/data/reply_schema.json
+Copyright: Henrik Sandklef
+License: GPL-3.0-or-later
 
 Files: .github/**
 Copyright: Henrik Sandklef
