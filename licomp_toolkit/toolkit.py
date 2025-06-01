@@ -300,7 +300,7 @@ class ExpressionExpressionChecker():
     def __parsed_expression_to_name(self, parsed_expression):
         return parsed_expression[parsed_expression[COMPATIBILITY_TYPE]]
 
-    def check_compatibility(self, outbound, inbound, usecase, provisioning, detailed_report=False):
+    def check_compatibility(self, outbound, inbound, usecase, provisioning, detailed_report=True):
         # Check usecase
         try:
             usecase = UseCase.string_to_usecase(usecase)
@@ -335,7 +335,7 @@ class ExpressionExpressionChecker():
                               inbound_parsed,
                               usecase,
                               provisioning,
-                              detailed_report=False):
+                              detailed_report=True):
 
         outbound_type = outbound_parsed[COMPATIBILITY_TYPE]
         compat_object = {
