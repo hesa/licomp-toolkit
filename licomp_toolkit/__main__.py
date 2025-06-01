@@ -10,16 +10,17 @@ import sys
 from licomp.interface import LicompException
 
 from licomp_toolkit.toolkit import LicompToolkit
-from licomp_toolkit.toolkit import LicompToolkitFormatter
+from licomp_toolkit.toolkit import ExpressionExpressionChecker
+from licomp_toolkit.format import LicompToolkitFormatter
 from licomp_toolkit.config import cli_name
 from licomp_toolkit.config import description
 from licomp_toolkit.config import epilog
-from licomp_toolkit.utils import licomp_results_to_return_code
 
 from licomp.main_base import LicompParser
 from licomp.interface import UseCase
 from licomp.interface import Provisioning
 from licomp.return_codes import ReturnCodes
+from licomp.return_codes import compatibility_status_to_returncode
 
 from flame.license_db import FossLicenses
 from flame.exception import FlameException
@@ -37,11 +38,14 @@ class LicompToolkitParser(LicompParser):
     def verify(self, args):
         formatter = LicompToolkitFormatter.formatter(self.args.output_format)
         try:
-            compatibilities = self.licomp_toolkit.outbound_inbound_compatibility(self.__normalize_license(args.out_license),
-                                                                                 self.__normalize_license(args.in_license),
-                                                                                 args.usecase,
-                                                                                 args.provisioning)
-            ret_code = licomp_results_to_return_code(compatibilities['summary']['results'])
+            expr_checker = ExpressionExpressionChecker()
+            compatibilities = expr_checker.check_compatibility(self.__normalize_license(args.out_license),
+                                                               self.__normalize_license(args.in_license),
+                                                               args.usecase,
+                                                               args.provisioning,
+                                                               detailed_report=True)
+
+            ret_code = compatibility_status_to_returncode(compatibilities['compatibility'])
             return formatter.format_compatibilities(compatibilities), ret_code, False
         except LicompException as e:
             return e, e.return_code.value, True
