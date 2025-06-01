@@ -15,6 +15,7 @@ from licomp_toolkit.format import LicompToolkitFormatter
 from licomp_toolkit.config import cli_name
 from licomp_toolkit.config import description
 from licomp_toolkit.config import epilog
+from licomp_toolkit.schema_checker import LicompToolkitSchemaChecker
 
 from licomp.main_base import LicompParser
 from licomp.interface import UseCase
@@ -35,6 +36,10 @@ class LicompToolkitParser(LicompParser):
     def __normalize_license(self, lic_name):
         return self.flame.expression_license(lic_name, update_dual=False)['identified_license']
 
+    def validate(self, args):
+        LicompToolkitSchemaChecker().validate_file(args.file_name, deep=False)
+        return "OK", ReturnCodes.LICOMP_OK.value, None
+    
     def verify(self, args):
         formatter = LicompToolkitFormatter.formatter(self.args.output_format)
         try:
