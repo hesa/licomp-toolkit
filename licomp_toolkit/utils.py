@@ -2,6 +2,10 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import importlib
+import logging
+
+from licomp.interface import Licomp
 from licomp.return_codes import compatibility_status_to_returncode
 from licomp.return_codes import ReturnCodes
 
@@ -21,3 +25,27 @@ def licomp_results_to_return_code(licomp_results):
         return compatibility_status_to_returncode(result)
 
     return ReturnCodes.LICOMP_INTERNAL_ERROR.value
+
+def __class_instance(package, class_name):
+    licomp_resource = importlib.import_resource(f'{package}')
+    licomp_class = getattr(licomp_resource, class_name)
+    return licomp_class()
+
+def __check_api_version(subclass):
+    licomp_api_version = Licomp.api_version()
+    subclass_api_version = subclass.supported_api_version()
+    logging.debug(f'{licomp_api_version} == {subclass_api_version} ???')
+
+    licomp_api_version_major = licomp_api_version.split('.')[0]
+    licomp_api_version_minor = licomp_api_version.split('.')[1]
+
+    subclass_api_version_major = subclass_api_version.split('.')[0]
+    subclass_api_version_minor = subclass_api_version.split('.')[1]
+    assert licomp_api_version_major == subclass_api_version_major # noqa: S101
+    assert licomp_api_version_minor == subclass_api_version_minor # noqa: S101
+
+def _inc_map(_map, _name):
+    curr = _map.get(_name, 0)
+    new = curr + 1
+    _map[_name] = new
+    return _map
