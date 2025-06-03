@@ -37,8 +37,8 @@ class LicompToolkitParser(LicompParser):
         return self.flame.expression_license(lic_name, update_dual=False)['identified_license']
 
     def validate(self, args):
-        LicompToolkitSchemaChecker().validate_file(args.file_name, deep=False)
-        return "OK", ReturnCodes.LICOMP_OK.value, None
+        LicompToolkitSchemaChecker().validate_file(args.file_name, deep=True)
+        return None, ReturnCodes.LICOMP_OK.value, None
 
     def verify(self, args):
         formatter = LicompToolkitFormatter.formatter(self.args.output_format)
@@ -142,7 +142,8 @@ def main():
 
     res, code, err, func = lct_parser.run_noexit()
     if _working_return_code(code):
-        print(res)
+        if res:
+            print(res)
     else:
         print(res, file=sys.stderr)
 
