@@ -63,6 +63,24 @@
               "$ref": "#/$defs/license",
               "description" : "The outbound license expression."
             },
+            "compatibility_details": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "compatibilities": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/licomp_object"
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "compatibility_object": {
               "type" : "object",
               "anyOf": [
@@ -75,7 +93,7 @@
               ]
             }
           },
-          "required": [ "compatibility", "compatibility_type", "compatibility_check", "inbound_license" , "outbound_license", "compatibility_object"],
+          "required": [ "compatibility", "compatibility_type", "compatibility_check", "inbound_license" , "outbound_license", "compatibility_object", "compatibility_details"],
           "additionalProperties" : false
         },
         {
@@ -98,6 +116,9 @@
             "outbound_license": {
               "$ref": "#/$defs/license",
               "description" : "The inbound license expression."
+            },
+            "compatibility_details": {
+              "type": "null"
             },
             "operator": {
               "enum": [ "AND", "OR" ],
@@ -138,6 +159,97 @@
         "outbound-license -> inbound-license"
       ],
       "description" : "A text describing if outbound license or expression is checked for compatiblility against inbound license or expression."
+    },
+    "licomp_object": {
+      "type" : "object",
+      "properties" : {
+        "status" : {
+          "enum": [ "failure", "success" ],
+          "description" : "Overall status indicating if the compatibility check succeeded."
+        },
+        "status_details" : {
+          "type" : "object",
+          "properties" : {
+	    "provisioning_status": {
+	      "enum": [ "failure", "success" ],
+              "description" : "Status indicating if the provisioning is supported."
+	    },
+	    "usecase_status": {
+	      "enum": [ "failure", "success" ],
+              "description" : "Status indicating if the usecase is supported."
+	    },
+	    "license_supported_status": {
+	      "enum": [ "failure", "success" ],
+              "description" : "Status indicating if the licenses are supported."
+	    }
+          }
+        },
+        "outbound" : {
+          "type" : "string",
+          "minLength": 1,
+          "description" : "The outbound license"
+        },
+        "inbound" : {
+          "type" : "string",
+          "minLength": 1,
+          "description" : "The inbound license"
+        },
+        "usecase" : {
+          "type" : "string",
+          "enum": ["library", "compiler", "snippet", "tool", "test"],
+          "description" : "Usecase for the compatibility check, e.g. library (as in using the inbound licensed component as a library)"
+        },
+        "provisioning" : {
+          "type" : "string",
+          "enum": ["source-code-distribution", "binary-distribution", "local-use", "provide-service", "provide-webui"],
+          "description" : "The way the component is provided to the user for the compatibility check, e.g. binary-distribution"
+        },
+        "modification" : {
+          "type" : "string",
+          "description" : "Has the component been modified. Currently not used/implemented.",
+          "enum": [ "unmodified", "modified"]
+        },
+        "compatibility_status" : {
+          "enum": [ "yes", "no", "depends", "unknown", "unsupported", null],
+          "description" : "The compatbility between the Outbound and Inbound license expressions"
+        },
+        "explanation" : {
+          "type" : [ "string", "null" ],
+          "description" : "A text describing the compatiblity, e.g. how the compatibility was determined"
+        },
+        "api_version" : {
+          "type" : "string",
+          "pattern": "^[0-9].[0-9](.[0-9]){0,1}$",
+          "description" : "The api version of the program providing the reply"
+        },
+        "resource_name1" : {
+          "type" : "string",
+          "minLength": 1,
+          "description" : "The name of the program providing the reply, e.g. licomp-osadl"
+        },
+        "resource_version" : {
+          "type" : "string",
+          "pattern": "^[0-9].[0-9](.[0-9]){0,1}$",
+          "description" : "The versions of the program providing the reply, e.g. licomp-osadl"
+        },
+        "resource_disclaimer" : {
+          "type" : "string",
+          "minLength": 10,
+          "description" : "A disclaimer of the program providing the reply."
+        },
+        "data_url" : {
+          "type" : "string",
+          "minLength": 10,
+          "description" : "A URL pointing to the data used to provide the resulting compatibility."
+        },
+        "resource_url" : {
+          "type" : "string",
+          "minLength": 10,
+          "description" : "A URL pointing to the project page (or similar) for the program providing the resulting compatibility."
+        }
+      },
+      "required" : [ "status", "status_details", "outbound", "inbound", "usecase", "provisioning", "modification", "compatibility_status", "explanation", "api_version", "resource_name1", "resource_version", "resource_disclaimer", "data_url", "resource_url"],
+      "additionalProperties" : false  
     }
   }
 }
