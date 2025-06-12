@@ -46,8 +46,8 @@ def test_supported():
         for out_lic in licenses:
             ret = lt.outbound_inbound_compatibility(out_lic,
                                                     in_lic,
-                                                    UseCase.usecase_to_string(usecase),
-                                                    Provisioning.provisioning_to_string(provisioning))
+                                                    usecase,
+                                                    provisioning)
             results = ret['summary']['results']
             if int(results['nr_valid']) == 0:
                 unsupported += 1

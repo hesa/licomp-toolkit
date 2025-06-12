@@ -8,7 +8,7 @@ my_supported_api_version = '0.5'
 cli_name = 'licomp-toolkit'
 module_name = 'licomp_toolkit'
 
-disclaimer = 'This software and the data come with no gurantee. For more information read the disclaimers from the individual compatibility resources, and contact a lawyer to make sure your software is compliant.'
+disclaimer = 'This software and the data come with no guarantee. For more information read the disclaimers from the individual compatibility resources, and contact a lawyer to make sure your software is compliant.'
 
 description = """
 Simple command line tool to check compatibility between two licenses, given context

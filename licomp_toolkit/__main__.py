@@ -10,16 +10,18 @@ import sys
 from licomp.interface import LicompException
 
 from licomp_toolkit.toolkit import LicompToolkit
-from licomp_toolkit.toolkit import LicompToolkitFormatter
+from licomp_toolkit.toolkit import ExpressionExpressionChecker
+from licomp_toolkit.format import LicompToolkitFormatter
 from licomp_toolkit.config import cli_name
 from licomp_toolkit.config import description
 from licomp_toolkit.config import epilog
-from licomp_toolkit.utils import licomp_results_to_return_code
+from licomp_toolkit.schema_checker import LicompToolkitSchemaChecker
 
 from licomp.main_base import LicompParser
 from licomp.interface import UseCase
 from licomp.interface import Provisioning
 from licomp.return_codes import ReturnCodes
+from licomp.return_codes import compatibility_status_to_returncode
 
 from flame.license_db import FossLicenses
 from flame.exception import FlameException
@@ -34,14 +36,21 @@ class LicompToolkitParser(LicompParser):
     def __normalize_license(self, lic_name):
         return self.flame.expression_license(lic_name, update_dual=False)['identified_license']
 
+    def validate(self, args):
+        LicompToolkitSchemaChecker().validate_file(args.file_name, deep=True)
+        return None, ReturnCodes.LICOMP_OK.value, None
+
     def verify(self, args):
         formatter = LicompToolkitFormatter.formatter(self.args.output_format)
         try:
-            compatibilities = self.licomp_toolkit.outbound_inbound_compatibility(self.__normalize_license(args.out_license),
-                                                                                 self.__normalize_license(args.in_license),
-                                                                                 args.usecase,
-                                                                                 args.provisioning)
-            ret_code = licomp_results_to_return_code(compatibilities['summary']['results'])
+            expr_checker = ExpressionExpressionChecker()
+            compatibilities = expr_checker.check_compatibility(self.__normalize_license(args.out_license),
+                                                               self.__normalize_license(args.in_license),
+                                                               args.usecase,
+                                                               args.provisioning,
+                                                               detailed_report=True)
+
+            ret_code = compatibility_status_to_returncode(compatibilities['compatibility'])
             return formatter.format_compatibilities(compatibilities), ret_code, False
         except LicompException as e:
             return e, e.return_code.value, True
@@ -50,7 +59,8 @@ class LicompToolkitParser(LicompParser):
 
     def supported_licenses(self, args):
         licenses = self.licomp_toolkit.supported_licenses()
-        return licenses, ReturnCodes.LICOMP_OK.value, None
+        formatter = LicompToolkitFormatter.formatter(args.output_format)
+        return formatter.format_licomp_resources(licenses), ReturnCodes.LICOMP_OK.value, None
 
     def supported_usecases(self, args):
         usecases = self.licomp_toolkit.supported_usecases()
@@ -65,7 +75,8 @@ class LicompToolkitParser(LicompParser):
         return provisioning_names, ReturnCodes.LICOMP_OK.value, None
 
     def supported_resources(self, args):
-        return [f'{x.name()}:{x.version()}' for x in self.licomp_toolkit.licomp_resources().values()], ReturnCodes.LICOMP_OK, False
+        formatter = LicompToolkitFormatter.formatter(args.output_format)
+        return formatter.format_licomp_resources([f'{x.name()}:{x.version()}' for x in self.licomp_toolkit.licomp_resources().values()]), ReturnCodes.LICOMP_OK.value, False
 
     def supports_license(self, args):
         lic = args.license
@@ -131,7 +142,8 @@ def main():
 
     res, code, err, func = lct_parser.run_noexit()
     if _working_return_code(code):
-        print(res)
+        if res:
+            print(res)
     else:
         print(res, file=sys.stderr)
 

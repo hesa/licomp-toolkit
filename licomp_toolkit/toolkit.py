@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import importlib
-import json
 import logging
 
 from licomp.interface import Licomp
@@ -11,6 +9,7 @@ from licomp.interface import UseCase
 from licomp.interface import Provisioning
 from licomp.interface import LicompException
 from licomp.return_codes import ReturnCodes
+from licomp.interface import CompatibilityStatus
 
 from licomp_osadl.osadl import LicompOsadl
 from licomp_reclicense.reclicense import LicompReclicense
@@ -23,62 +22,17 @@ from licomp_toolkit.config import disclaimer
 from licomp_toolkit.config import licomp_toolkit_version
 from licomp_toolkit.config import cli_name
 
-class LicompToolkitFormatter():
+from licomp_toolkit.expr_parser import LicenseExpressionParser
+from licomp_toolkit.expr_parser import COMPATIBILITY_TYPE
+from licomp_toolkit.expr_parser import AND
+from licomp_toolkit.expr_parser import OR
 
-    @staticmethod
-    def formatter(fmt):
-        if fmt.lower() == 'json':
-            return JsonLicompToolkitFormatter()
-        if fmt.lower() == 'text':
-            return TextLicompToolkitFormatter()
-
-    def format_compatibilities(self, compat):
-        return None
-
-    def format_licomp_resources(self, licomp_resources):
-        return None
-
-    def format_licomp_versions(self, licomp_versions):
-        return None
-
-class JsonLicompToolkitFormatter():
-
-    def format_compatibilities(self, compat):
-        return json.dumps(compat, indent=4)
-
-    def format_licomp_resources(self, licomp_resources):
-        return json.dumps(licomp_resources, indent=4)
-
-    def format_licomp_versions(self, licomp_versions):
-        return json.dumps(licomp_versions, indent=4)
-
-class TextLicompToolkitFormatter():
-
-    def format_licomp_resources(self, licomp_resources):
-        return "\n".join(licomp_resources)
-
-    def format_compatibilities(self, compat):
-        summary = compat['summary']
-        output = []
-        nr_valid = summary['results']['nr_valid']
-        output.append(f'{nr_valid} succesfull response(s)')
-        if int(nr_valid) > 0:
-            output.append('Results:')
-            statuses = summary['compatibility_statuses']
-            for status in statuses.keys():
-                output.append(f'   {status}: {", ".join(statuses[status])}')
-        return "\n".join(output)
-
-    def format_licomp_versions(self, licomp_versions):
-        lt = 'licomp-toolkit'
-        res = [f'{lt}: {licomp_versions[lt]}']
-        for k, v in licomp_versions['licomp-resources'].items():
-            res.append(f'{k}: {v}')
-        return '\n'.join(res)
+from licomp_toolkit.config import my_supported_api_version
 
 class LicompToolkit(Licomp):
 
     def __init__(self):
+        Licomp.__init__(self)
         self.LICOMP_RESOURCES = {}
         self.LICOMP_RESOURCE_NAMES = {
             "osadl": {
@@ -98,6 +52,9 @@ class LicompToolkit(Licomp):
                 "class": "LicompDw",
             },
         }
+
+    def supported_api_version(self):
+        return my_supported_api_version
 
     def __add_to_list(self, store, data, name):
         if not data:
@@ -122,11 +79,12 @@ class LicompToolkit(Licomp):
         statuses = {}
         compats = {}
         compatibilities['nr_licomp'] = len(self.licomp_resources())
-        for resource_name in self.licomp_resources():
-            compat = compatibilities["compatibilities"][resource_name]
+        #        for resource_name in self.licomp_resources():
+        for compat in compatibilities["compatibilities"]:
+            logging.debug(f': {compat}')
             logging.debug(f': {compat["resource_name"]}')
-            self.__add_to_list(statuses, compat['status'], compat['resource_name'])
-            self.__add_to_list(compats, compat['compatibility_status'], compat['resource_name'])
+            self.__add_to_list(statuses, compat['status'], compat)
+            self.__add_to_list(compats, compat['compatibility_status'], compat)
         compatibilities["summary"]["resources"] = [f'{x.name()}:{x.version()}' for x in self.licomp_resources().values()]
         compatibilities["summary"]["outbound"] = outbound
         compatibilities["summary"]["inbound"] = inbound
@@ -159,26 +117,15 @@ class LicompToolkit(Licomp):
     def outbound_inbound_compatibility(self, outbound, inbound, usecase, provisioning):
         logging.debug(f'{inbound} {outbound} ')
 
-        # Check usecase
-        try:
-            usecase = UseCase.string_to_usecase(usecase)
-        except KeyError:
-            raise LicompException(f'Usecase {usecase} not supported.', ReturnCodes.LICOMP_UNSUPPORTED_USECASE)
-
-        # Check provisioning
-        try:
-            provisioning = Provisioning.string_to_provisioning(provisioning)
-        except KeyError:
-            raise LicompException(f'Provisioning {provisioning} not supported.', ReturnCodes.LICOMP_UNSUPPORTED_PROVISIONING)
-
         compatibilities = {}
-        compatibilities['compatibilities'] = {}
+        compatibilities['compatibilities'] = []
 
         for resource_name in self.licomp_resources():
             resource = self.licomp_resources()[resource_name]
             logging.debug(f'-- resource: {resource.name()}')
+
             compat = resource.outbound_inbound_compatibility(outbound, inbound, usecase, provisioning=provisioning)
-            compatibilities['compatibilities'][compat['resource_name']] = compat
+            compatibilities['compatibilities'].append(compat)
 
         self.__summarize_compatibility(compatibilities, outbound, inbound, usecase, provisioning)
         self.__add_meta(compatibilities)
@@ -223,26 +170,225 @@ class LicompToolkit(Licomp):
     def name(self):
         return cli_name
 
-def __class_instance(package, class_name):
-    licomp_resource = importlib.import_resource(f'{package}')
-    licomp_class = getattr(licomp_resource, class_name)
-    return licomp_class()
+class LicenseExpressionChecker():
 
-def __check_api_version(subclass):
-    licomp_api_version = Licomp.api_version()
-    subclass_api_version = subclass.supported_api_version()
-    logging.debug(f'{licomp_api_version} == {subclass_api_version} ???')
+    def __init__(self):
+        self.le_parser = LicenseExpressionParser()
+        self.licomp = LicompToolkit()
 
-    licomp_api_version_major = licomp_api_version.split('.')[0]
-    licomp_api_version_minor = licomp_api_version.split('.')[1]
+    def outbound_inbound_compatibility(self, outbound, lic, usecase, provisioning):
+        return self.licomp.outbound_inbound_compatibility(outbound,
+                                                          lic,
+                                                          usecase,
+                                                          provisioning)
 
-    subclass_api_version_major = subclass_api_version.split('.')[0]
-    subclass_api_version_minor = subclass_api_version.split('.')[1]
-    assert licomp_api_version_major == subclass_api_version_major # noqa: S101
-    assert licomp_api_version_minor == subclass_api_version_minor # noqa: S101
+    def __compatibility_status(self, compatibility):
+        status = compatibility['summary']['results']
+        rets = []
+        for ret in status:
+            if ret == 'nr_valid':
+                continue
+            elif not ret:
+                pass
+            elif ret == CompatibilityStatus.compat_status_to_string(CompatibilityStatus.UNSUPPORTED):
+                pass
+            else:
+                rets.append(ret)
 
-def _inc_map(_map, _name):
-    curr = _map.get(_name, 0)
-    new = curr + 1
-    _map[_name] = new
-    return _map
+        if len(rets) == 0:
+            return CompatibilityStatus.compat_status_to_string(CompatibilityStatus.UNSUPPORTED)
+
+        if len(rets) == 1:
+            return rets[0]
+
+        return CompatibilityStatus.compat_status_to_string(CompatibilityStatus.MIXED)
+
+    def check_compatibility(self,
+                            outbound,
+                            parsed_expression,
+                            usecase,
+                            provisioning,
+                            detailed_report=True):
+
+        compat_object = {
+            COMPATIBILITY_TYPE: parsed_expression[COMPATIBILITY_TYPE],
+            'compatibility_check': 'outbound-expression -> inbound-license',
+        }
+
+        if parsed_expression[COMPATIBILITY_TYPE] == 'license':
+            compat_object['compatibility_check'] = 'outbound-license -> inbound-license'
+            lic = parsed_expression['license']
+            compat = self.outbound_inbound_compatibility(outbound,
+                                                         lic,
+                                                         usecase,
+                                                         provisioning)
+            compat_object['compatibility'] = self.__compatibility_status(compat)
+            if detailed_report:
+                compat_object['compatibility_details'] = compat
+            else:
+                compat_object['compatibility_details'] = None
+            compat_object['inbound_license'] = lic
+            compat_object['outbound_license'] = outbound
+            compat_object['compatibility_object'] = {}
+
+        else:
+            operator = parsed_expression['operator']
+            operands = parsed_expression['operands']
+            compat_object['operator'] = operator
+
+            compat_object['inbound_license'] = self.le_parser.to_string(parsed_expression)
+            compat_object['outbound_license'] = outbound
+            compat_object['compatibility_details'] = None
+            operands_object = []
+            for operand in operands:
+                operand_compat = self.check_compatibility(outbound, operand, usecase, provisioning, detailed_report=detailed_report)
+                operand_object = {
+                    'compatibility_object': operand_compat,
+                    'compatibility': operand_compat['compatibility'],
+                }
+                operands_object.append(operand_object)
+
+            compat_object['compatibility'] = self.summarise_compatibilities(operator, operands_object)
+            compat_object['operands'] = operands_object
+
+        return compat_object
+
+    def __init_summary(self, operands):
+        summary = {
+            "yes": 0,
+            "no": 0,
+            "depends": 0,
+            "unknown": 0,
+            "unsupported": 0,
+            "mixed": 0,
+        }
+        for operand in operands:
+            compat = operand['compatibility']
+            summary[compat] = summary[compat] + 1
+        return summary
+
+    def __summarise_compatibilities_and(self, operands):
+        nr_operands = len(operands)
+        summary = self.__init_summary(operands)
+
+        if summary['no'] != 0:
+            return 'no'
+
+        if summary['yes'] == nr_operands:
+            return "yes"
+
+        return "no"
+
+    def __summarise_compatibilities_or(self, operands):
+        summary = self.__init_summary(operands)
+
+        if summary['yes'] != 0:
+            return 'yes'
+
+        return "no"
+
+    def summarise_compatibilities(self, operator, operands):
+        return {
+            AND: self.__summarise_compatibilities_and,
+            OR: self.__summarise_compatibilities_or,
+        }[operator](operands)
+
+
+class ExpressionExpressionChecker():
+
+    def __init__(self):
+        self.le_checker = LicenseExpressionChecker()
+        self.le_parser = LicenseExpressionParser()
+
+    def __parsed_expression_to_name(self, parsed_expression):
+        return parsed_expression[parsed_expression[COMPATIBILITY_TYPE]]
+
+    def check_compatibility(self, outbound, inbound, usecase, provisioning, detailed_report=True):
+        # Check usecase
+        try:
+            usecase = UseCase.string_to_usecase(usecase)
+        except KeyError:
+            raise LicompException(f'Usecase {usecase} not supported.', ReturnCodes.LICOMP_UNSUPPORTED_USECASE)
+
+        # Check provisioning
+        try:
+            provisioning = Provisioning.string_to_provisioning(provisioning)
+        except KeyError:
+            raise LicompException(f'Provisioning {provisioning} not supported.', ReturnCodes.LICOMP_UNSUPPORTED_PROVISIONING)
+
+        inbound_parsed = self.le_parser.parse_license_expression(inbound)
+
+        outbound_parsed = self.le_parser.parse_license_expression(outbound)
+        compatibility_object = self.__check_compatibility(outbound_parsed,
+                                                          inbound_parsed,
+                                                          usecase,
+                                                          provisioning,
+                                                          detailed_report)
+        return {
+            'inbound': inbound,
+            'outbound': outbound,
+            'usecase': UseCase.usecase_to_string(usecase),
+            'provisioning': Provisioning.provisioning_to_string(provisioning),
+            'compatibility': compatibility_object['compatibility'],
+            'compatibility_report': compatibility_object,
+        }
+
+    def __check_compatibility(self,
+                              outbound_parsed,
+                              inbound_parsed,
+                              usecase,
+                              provisioning,
+                              detailed_report=True):
+
+        outbound_type = outbound_parsed[COMPATIBILITY_TYPE]
+        compat_object = {
+            COMPATIBILITY_TYPE: outbound_type,
+            'inbound_license': self.le_parser.to_string(inbound_parsed),
+            'outbound_license': self.le_parser.to_string(outbound_parsed),
+        }
+
+        if outbound_type == 'license':
+            compat_object['compatibility_check'] = f'outbound-license -> inbound-{inbound_parsed["compatibility_type"]}'
+            outbound_parsed_license = outbound_parsed['license']
+            # Check if:
+            #    outbound license
+            #    is compatible with
+            #    inbound license
+            compat = self.le_checker.check_compatibility(outbound_parsed_license,
+                                                         inbound_parsed,
+                                                         usecase,
+                                                         provisioning,
+                                                         detailed_report)
+            compat_object['compatibility'] = compat['compatibility']
+            compat_object['compatibility_object'] = compat
+            compat_object['compatibility_details'] = None
+
+        elif outbound_type == 'expression':
+            compat_object['compatibility_details'] = None
+            compat_object['compatibility_check'] = f'outbound-expression -> inbound-{inbound_parsed["compatibility_type"]}'
+            operator = outbound_parsed['operator']
+            operands = outbound_parsed['operands']
+
+            compat_object['operator'] = operator
+
+            operands_object = []
+            for operand in operands:
+                # Check if:
+                #    operand from outbound license
+                #    is compatible with
+                #    inbound license
+                operand_compat = self.__check_compatibility(operand,
+                                                            inbound_parsed,
+                                                            usecase,
+                                                            provisioning,
+                                                            detailed_report)
+                operand_object = {
+                    'compatibility_object': operand_compat,
+                    'compatibility': operand_compat['compatibility'],
+                }
+                operands_object.append(operand_object)
+
+            compat_object['compatibility'] = self.le_checker.summarise_compatibilities(operator, operands_object)
+            compat_object['operands'] = operands_object
+
+        return compat_object
