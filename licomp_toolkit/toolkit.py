@@ -79,11 +79,12 @@ class LicompToolkit(Licomp):
         statuses = {}
         compats = {}
         compatibilities['nr_licomp'] = len(self.licomp_resources())
-        for resource_name in self.licomp_resources():
-            compat = compatibilities["compatibilities"][resource_name]
+        #        for resource_name in self.licomp_resources():
+        for compat in compatibilities["compatibilities"]:
+            logging.debug(f': {compat}')
             logging.debug(f': {compat["resource_name"]}')
-            self.__add_to_list(statuses, compat['status'], compat['resource_name'])
-            self.__add_to_list(compats, compat['compatibility_status'], compat['resource_name'])
+            self.__add_to_list(statuses, compat['status'], compat)
+            self.__add_to_list(compats, compat['compatibility_status'], compat)
         compatibilities["summary"]["resources"] = [f'{x.name()}:{x.version()}' for x in self.licomp_resources().values()]
         compatibilities["summary"]["outbound"] = outbound
         compatibilities["summary"]["inbound"] = inbound
@@ -117,14 +118,14 @@ class LicompToolkit(Licomp):
         logging.debug(f'{inbound} {outbound} ')
 
         compatibilities = {}
-        compatibilities['compatibilities'] = {}
+        compatibilities['compatibilities'] = []
 
         for resource_name in self.licomp_resources():
             resource = self.licomp_resources()[resource_name]
             logging.debug(f'-- resource: {resource.name()}')
 
             compat = resource.outbound_inbound_compatibility(outbound, inbound, usecase, provisioning=provisioning)
-            compatibilities['compatibilities'][compat['resource_name']] = compat
+            compatibilities['compatibilities'].append(compat)
 
         self.__summarize_compatibility(compatibilities, outbound, inbound, usecase, provisioning)
         self.__add_meta(compatibilities)
@@ -224,7 +225,8 @@ class LicenseExpressionChecker():
             compat_object['compatibility'] = self.__compatibility_status(compat)
             if detailed_report:
                 compat_object['compatibility_details'] = compat
-
+            else:
+                compat_object['compatibility_details'] = None
             compat_object['inbound_license'] = lic
             compat_object['outbound_license'] = outbound
             compat_object['compatibility_object'] = {}
@@ -236,6 +238,7 @@ class LicenseExpressionChecker():
 
             compat_object['inbound_license'] = self.le_parser.to_string(parsed_expression)
             compat_object['outbound_license'] = outbound
+            compat_object['compatibility_details'] = None
             operands_object = []
             for operand in operands:
                 operand_compat = self.check_compatibility(outbound, operand, usecase, provisioning, detailed_report=detailed_report)
@@ -358,8 +361,10 @@ class ExpressionExpressionChecker():
                                                          detailed_report)
             compat_object['compatibility'] = compat['compatibility']
             compat_object['compatibility_object'] = compat
+            compat_object['compatibility_details'] = None
 
         elif outbound_type == 'expression':
+            compat_object['compatibility_details'] = None
             compat_object['compatibility_check'] = f'outbound-expression -> inbound-{inbound_parsed["compatibility_type"]}'
             operator = outbound_parsed['operator']
             operands = outbound_parsed['operands']
