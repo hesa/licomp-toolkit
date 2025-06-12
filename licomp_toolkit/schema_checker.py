@@ -32,7 +32,8 @@ class LicompToolkitSchemaChecker:
             else:
                 details = compat_object['compatibility_details']
             compatibilities = details['compatibilities']
-            for compatibility_object in compatibilities.values():
+            for compatibility_object in compatibilities:
+                logging.debug(f'  {compatibility_object["resource_name"]}')
                 inner_validations = lt.validate(compatibility_object)
                 validations += 1
                 logging.debug('Validation OK')
