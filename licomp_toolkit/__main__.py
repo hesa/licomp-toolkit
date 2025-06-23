@@ -43,12 +43,19 @@ class LicompToolkitParser(LicompParser):
     def verify(self, args):
         formatter = LicompToolkitFormatter.formatter(self.args.output_format)
         try:
+            if args.no_verbose:
+                detailed_report = False
+            else:
+                detailed_report = True
+
+                
             expr_checker = ExpressionExpressionChecker()
             compatibilities = expr_checker.check_compatibility(self.__normalize_license(args.out_license),
                                                                self.__normalize_license(args.in_license),
                                                                args.usecase,
                                                                args.provisioning,
-                                                               detailed_report=True)
+                                                               resources=args.resources,
+                                                               detailed_report=detailed_report)
 
             ret_code = compatibility_status_to_returncode(compatibilities['compatibility'])
             return formatter.format_compatibilities(compatibilities), ret_code, False
@@ -118,7 +125,20 @@ def main():
                                      UseCase.LIBRARY,
                                      Provisioning.BIN_DIST)
 
+    parser = lct_parser.parser
     subparsers = lct_parser.sub_parsers()
+
+    parser.add_argument('-r', '--resources',
+                        type=str,
+                        action='append',
+                        help='use only specified licomp resource',
+                        default=[])
+    # TODO: check if resource exists
+
+    parser.add_argument('-nv', '--no-verbose',
+                        action='store_true',
+                        help='keep compatibility report as short as possible',
+                        default=[])
 
     # Command: list supported
     parser_sr = subparsers.add_parser('supported-resources', help='List all supported Licomp resources')
