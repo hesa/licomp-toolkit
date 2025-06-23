@@ -12,6 +12,8 @@ class LicompToolkitFormatter():
             return JsonLicompToolkitFormatter()
         if fmt.lower() == 'text':
             return TextLicompToolkitFormatter()
+        if fmt.lower() == 'markdown':
+            return MarkdownLicompToolkitFormatter()
 
     def format_compatibilities(self, compat):
         return None
@@ -47,16 +49,113 @@ class TextLicompToolkitFormatter():
     def format_licomp_licenses(self, licomp_licenses):
         return "\n".join(licomp_licenses)
 
-    def format_compatibilities(self, compat):
-        summary = compat['summary']
+    def __get_responses(self, results, indent=""):
         output = []
-        nr_valid = summary['results']['nr_valid']
-        output.append(f'{nr_valid} succesfull response(s)')
-        if int(nr_valid) > 0:
-            output.append('Results:')
-            statuses = summary['compatibility_statuses']
-            for status in statuses.keys():
-                output.append(f'   {status}: {", ".join(statuses[status])}')
+        for res in ['yes', 'no', 'schneben']:
+            result = results.get(res)
+            if not result:
+                count = 0
+            else:
+                count = result["count"]
+            output.append(f'{indent}{res}: {count}')
+
+        return output
+
+    def __compatibility_statuses(self, statuses, indent=""):
+        output = []
+        for status, values in statuses.items():
+            resources = []
+            for object in values:
+                resources.append(object['resource_name'])
+            output.append(f'{indent}{status}: {", ".join(resources)}')
+
+        return output
+
+    def __statuses(self, statuses, indent=""):
+        output = []
+        for status, values in statuses.items():
+            resources = []
+            for object in values:
+                resources.append(object['resource_name'])
+            output.append(f'{indent}{status}: {", ".join(resources)}')
+
+        return output
+
+    def format_compatibilities_object(self, compat_object, indent=""):
+        compatibility_check = compat_object["compatibility_check"]
+        output = []
+
+        if compatibility_check == "outbound-license -> inbound-license":
+            print(f' ---=== {compat_object["outbound_license"]} -> {compat_object["inbound_license"]} ===---')
+            if not compat_object["compatibility_object"]:
+                #print("APA " + str(json.dumps(compat_object, indent=4)))
+                #print("APA " + str(compat_object))
+                import sys
+                #sys.exit(1)
+                pass
+            else:
+                compat_object = compat_object["compatibility_object"]
+            details = compat_object["compatibility_details"]
+            summary = details["summary"]
+            results = summary["results"]
+            #output.append(f'{indent}  validity:')
+            #output.append(f'{indent}    total: {details["nr_licomp"]}')
+            #output.append(f'{indent}    valid: {results["nr_valid"]}')
+            #output += self.__statuses(summary['statuses'], f'{indent}    ')
+
+            output.append(f'{indent}{compat_object["outbound_license"]} -> {compat_object["inbound_license"]}')
+            output.append(f'{indent}  compatibility: {compat_object["compatibility"]}')
+            output.append(f'{indent}  compatibility details:')
+            output += self.__compatibility_statuses(summary['compatibility_statuses'], f'{indent}    ')
+
+            #return "l -> l"
+        if compatibility_check == "outbound-license -> inbound-expression":
+            #output.append('  l -> e - remove me later')
+            outbound = compat_object["compatibility_object"]["outbound_license"]
+            operator = compat_object["compatibility_object"]["operator"]
+            #output.append(f'{indent}{outbound}')
+            output.append(f'{indent}{operator}')
+            for operand in compat_object["compatibility_object"]["operands"]:
+                res = self.format_compatibilities_object(operand['compatibility_object'], indent = indent + '  ')
+                output.append(res)
+            
+            
+        if compatibility_check == "outbound-expression -> inbound-license":
+            output.append(f'{indent} e -> l   === TODO')
+            print("000000  " + str(compat_object.get("compatibility_object")))
+            #outbound = compat_object["compatibility_object"]["outbound_license"]
+            operator = compat_object["operator"]
+            #output.append(f'{indent}{outbound}')
+            output.append(f'{indent}{operator}')
+            for operand in compat_object["operands"]:
+                res = self.format_compatibilities_object(operand['compatibility_object'], indent = indent + '  ')
+                output.append(res)
+        if compatibility_check == "outbound-expression -> inbound-expression":
+            output.append(f'{indent}{compat_object["operator"]}')
+            for operand in compat_object['operands']:
+                #print(" ---- " + str(operand))
+                res = self.format_compatibilities_object(operand['compatibility_object'], indent = indent + '  ')
+                output.append(f'{indent}  {res}')
+                
+            
+
+        return "\n".join(output)
+        
+    
+    def format_compatibilities(self, compat):
+        output = []
+        output.append(f'outbound:      {compat["outbound"]}')
+        output.append(f'inbound:       {compat["inbound"]}')
+        output.append(f'resources:     {", ".join(compat["resources"])}')
+        output.append(f'provisioning:  {compat["provisioning"]}')
+        output.append(f'usecase:       {compat["usecase"]}')
+        output.append(f'compatibility: {compat["compatibility"]}')
+        output.append(f'report:')
+        output.append(self.format_compatibilities_object(compat["compatibility_report"]))
+
+        print(str("\n".join(output)))
+        import sys
+        sys.exit(1)
         return "\n".join(output)
 
     def format_licomp_versions(self, licomp_versions):
