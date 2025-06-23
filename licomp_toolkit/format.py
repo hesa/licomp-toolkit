@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
+import yaml
 
 class LicompToolkitFormatter():
 
@@ -12,8 +13,6 @@ class LicompToolkitFormatter():
             return JsonLicompToolkitFormatter()
         if fmt.lower() == 'text':
             return TextLicompToolkitFormatter()
-        if fmt.lower() == 'markdown':
-            return MarkdownLicompToolkitFormatter()
 
     def format_compatibilities(self, compat):
         return None
@@ -101,7 +100,7 @@ class TextLicompToolkitFormatter():
         if compatibility_check == "outbound-license -> inbound-expression":
             outbound = compat_object["compatibility_object"]["outbound_license"]
             operator = compat_object["compatibility_object"]["operator"]
-            output.append(f'{indent}{operator}  (compatibility: {compat_object["compatibility"]})')
+            output.append(f'{indent}{operator} -- compatibility: {compat_object["compatibility"]}')
             for operand in compat_object["compatibility_object"]["operands"]:
                 res = self.format_compatibilities_object(operand['compatibility_object'], indent = f'{indent}  ')
                 output.append(res)
@@ -109,18 +108,19 @@ class TextLicompToolkitFormatter():
             
         if compatibility_check == "outbound-expression -> inbound-license":
             operator = compat_object["operator"]
-            output.append(f'{indent}{operator}  (compatibility: {compat_object["compatibility"]})')
+            output.append(f'{indent}{operator} -- compatibility: {compat_object["compatibility"]}')
             for operand in compat_object["operands"]:
                 res = self.format_compatibilities_object(operand['compatibility_object'], indent = f'{indent}  ')
                 output.append(res)
         if compatibility_check == "outbound-expression -> inbound-expression":
-            output.append(f'{indent}{compat_object["operator"]}  (compatibility: {compat_object["compatibility"]})')
+            operator = compat_object["operator"]
+            compat = compat_object["compatibility"]
+            output.append(f'{indent}{operator} -- compatibility: {compat}')
             for operand in compat_object['operands']:
                 res = self.format_compatibilities_object(operand['compatibility_object'], indent = f'{indent}  ')
                 output.append(f'{res}')
                 
         return "\n".join(output)
-        
     
     def format_compatibilities(self, compat):
         output = []
