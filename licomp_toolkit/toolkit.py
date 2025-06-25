@@ -31,6 +31,9 @@ from licomp_toolkit.config import my_supported_api_version
 
 class LicompToolkit(Licomp):
 
+    #TODO: document that this class check
+    #  lic -> lic
+    
     def __init__(self):
         Licomp.__init__(self)
         self.LICOMP_RESOURCES = {}
@@ -74,11 +77,11 @@ class LicompToolkit(Licomp):
                 self.LICOMP_RESOURCES[licomp_instance.name()] = licomp_instance
         return self.LICOMP_RESOURCES
 
-    def __summarize_compatibility(self, compatibilities, outbound, inbound, usecase, provisioning):
+    def __summarize_compatibility(self, compatibilities, outbound, inbound, usecase, provisioning, resources):
         compatibilities["summary"] = {}
         statuses = {}
         compats = {}
-        compatibilities['nr_licomp'] = len(self.licomp_resources())
+        compatibilities['nr_licomp'] = len(resources)
         #        for resource_name in self.licomp_resources():
         for compat in compatibilities["compatibilities"]:
             logging.debug(f': {compat}')
@@ -114,20 +117,20 @@ class LicompToolkit(Licomp):
         compatibilities['summary']['results'] = results
 
     # override top class
-    def outbound_inbound_compatibility(self, outbound, inbound, usecase, provisioning):
+    def outbound_inbound_compatibility(self, outbound, inbound, usecase, provisioning, resources):
         logging.debug(f'{inbound} {outbound} ')
 
         compatibilities = {}
         compatibilities['compatibilities'] = []
 
-        for resource_name in self.licomp_resources():
+        for resource_name in resources:
             resource = self.licomp_resources()[resource_name]
             logging.debug(f'-- resource: {resource.name()}')
 
             compat = resource.outbound_inbound_compatibility(outbound, inbound, usecase, provisioning=provisioning)
             compatibilities['compatibilities'].append(compat)
 
-        self.__summarize_compatibility(compatibilities, outbound, inbound, usecase, provisioning)
+        self.__summarize_compatibility(compatibilities, outbound, inbound, usecase, provisioning, resources)
         self.__add_meta(compatibilities)
 
         return compatibilities
@@ -172,15 +175,12 @@ class LicompToolkit(Licomp):
 
 class LicenseExpressionChecker():
 
+    #TODO: document that this class check
+    #  lic -> expr
+
     def __init__(self):
         self.le_parser = LicenseExpressionParser()
-        self.licomp = LicompToolkit()
-
-    def outbound_inbound_compatibility(self, outbound, lic, usecase, provisioning):
-        return self.licomp.outbound_inbound_compatibility(outbound,
-                                                          lic,
-                                                          usecase,
-                                                          provisioning)
+        self.licomp_toolkit = LicompToolkit()
 
     def __compatibility_status(self, compatibility):
         status = compatibility['summary']['results']
@@ -208,8 +208,11 @@ class LicenseExpressionChecker():
                             parsed_expression,
                             usecase,
                             provisioning,
+                            resources,
                             detailed_report=True):
 
+
+        
         compat_object = {
             COMPATIBILITY_TYPE: parsed_expression[COMPATIBILITY_TYPE],
             'compatibility_check': 'outbound-expression -> inbound-license',
@@ -218,10 +221,11 @@ class LicenseExpressionChecker():
         if parsed_expression[COMPATIBILITY_TYPE] == 'license':
             compat_object['compatibility_check'] = 'outbound-license -> inbound-license'
             lic = parsed_expression['license']
-            compat = self.outbound_inbound_compatibility(outbound,
-                                                         lic,
-                                                         usecase,
-                                                         provisioning)
+            compat = self.licomp_toolkit.outbound_inbound_compatibility(outbound,
+                                                                        lic,
+                                                                        usecase,
+                                                                        provisioning,
+                                                                        resources)
             compat_object['compatibility'] = self.__compatibility_status(compat)
             if detailed_report:
                 compat_object['compatibility_details'] = compat
@@ -241,7 +245,7 @@ class LicenseExpressionChecker():
             compat_object['compatibility_details'] = None
             operands_object = []
             for operand in operands:
-                operand_compat = self.check_compatibility(outbound, operand, usecase, provisioning, detailed_report=detailed_report)
+                operand_compat = self.check_compatibility(outbound, operand, usecase, provisioning, resources, detailed_report=detailed_report)
                 operand_object = {
                     'compatibility_object': operand_compat,
                     'compatibility': operand_compat['compatibility'],
@@ -296,14 +300,47 @@ class LicenseExpressionChecker():
 
 class ExpressionExpressionChecker():
 
+    #TODO: document that this class check
+    #  expr -> expr
+
     def __init__(self):
         self.le_checker = LicenseExpressionChecker()
         self.le_parser = LicenseExpressionParser()
+        self.licomp_toolkit = LicompToolkit()
 
     def __parsed_expression_to_name(self, parsed_expression):
         return parsed_expression[parsed_expression[COMPATIBILITY_TYPE]]
 
-    def check_compatibility(self, outbound, inbound, usecase, provisioning, detailed_report=True):
+    def check_compatibility(self, outbound, inbound, usecase, provisioning, resources=[], detailed_report=True):
+
+        licomp_resources = list(self.licomp_toolkit.licomp_resources().keys())
+        if not resources:
+            resources = licomp_resources
+        else:
+            resources = args.resources
+
+        unavailable_resources = {}
+
+        for resource in resources:
+            resource_object = self.licomp_toolkit.licomp_resources()[resource]
+            unavailable_reasons = []
+            
+            # is usecase supported by resource
+            if not resource_object.usecase_supported(UseCase.string_to_usecase(usecase)):
+                unavailable_reasons.append(f'Usecase "{usecase}" not supported')
+
+            # is prov case supported by resource
+            if not resource_object.provisioning_supported(Provisioning.string_to_provisioning(provisioning)):
+                unavailable_reasons.append(f'Provisioning case "{provisioning}" not supported')
+
+            if unavailable_reasons:
+                unavailable_resources[resource] = {
+                    'reasons': ", ".join(unavailable_reasons)
+                }
+
+                
+        available_resources = [resource for resource in resources if resource not in list(unavailable_resources.keys())]
+        
         # Check usecase
         try:
             usecase = UseCase.string_to_usecase(usecase)
@@ -317,20 +354,24 @@ class ExpressionExpressionChecker():
             raise LicompException(f'Provisioning {provisioning} not supported.', ReturnCodes.LICOMP_UNSUPPORTED_PROVISIONING)
 
         inbound_parsed = self.le_parser.parse_license_expression(inbound)
-
         outbound_parsed = self.le_parser.parse_license_expression(outbound)
+        
         compatibility_object = self.__check_compatibility(outbound_parsed,
                                                           inbound_parsed,
                                                           usecase,
                                                           provisioning,
+                                                          resources,
                                                           detailed_report)
         return {
             'inbound': inbound,
             'outbound': outbound,
             'usecase': UseCase.usecase_to_string(usecase),
+            'resources': resources,
             'provisioning': Provisioning.provisioning_to_string(provisioning),
             'compatibility': compatibility_object['compatibility'],
             'compatibility_report': compatibility_object,
+            'unavailable_resources': unavailable_resources,
+            'available_resources': available_resources,
         }
 
     def __check_compatibility(self,
@@ -338,6 +379,7 @@ class ExpressionExpressionChecker():
                               inbound_parsed,
                               usecase,
                               provisioning,
+                              resources,
                               detailed_report=True):
 
         outbound_type = outbound_parsed[COMPATIBILITY_TYPE]
@@ -358,6 +400,7 @@ class ExpressionExpressionChecker():
                                                          inbound_parsed,
                                                          usecase,
                                                          provisioning,
+                                                         resources,
                                                          detailed_report)
             compat_object['compatibility'] = compat['compatibility']
             compat_object['compatibility_object'] = compat
@@ -381,6 +424,7 @@ class ExpressionExpressionChecker():
                                                             inbound_parsed,
                                                             usecase,
                                                             provisioning,
+                                                            resources,
                                                             detailed_report)
                 operand_object = {
                     'compatibility_object': operand_compat,
