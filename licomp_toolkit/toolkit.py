@@ -211,8 +211,6 @@ class LicenseExpressionChecker():
                             resources,
                             detailed_report=True):
 
-
-        
         compat_object = {
             COMPATIBILITY_TYPE: parsed_expression[COMPATIBILITY_TYPE],
             'compatibility_check': 'outbound-expression -> inbound-license',
@@ -311,20 +309,20 @@ class ExpressionExpressionChecker():
     def __parsed_expression_to_name(self, parsed_expression):
         return parsed_expression[parsed_expression[COMPATIBILITY_TYPE]]
 
-    def check_compatibility(self, outbound, inbound, usecase, provisioning, resources=[], detailed_report=True):
+    def check_compatibility(self, outbound, inbound, usecase, provisioning, resources=None, detailed_report=True):
 
         licomp_resources = list(self.licomp_toolkit.licomp_resources().keys())
         if not resources:
             resources = licomp_resources
         else:
-            resources = args.resources
+            resources = resources
 
         unavailable_resources = {}
 
         for resource in resources:
             resource_object = self.licomp_toolkit.licomp_resources()[resource]
             unavailable_reasons = []
-            
+
             # is usecase supported by resource
             if not resource_object.usecase_supported(UseCase.string_to_usecase(usecase)):
                 unavailable_reasons.append(f'Usecase "{usecase}" not supported')
@@ -335,12 +333,11 @@ class ExpressionExpressionChecker():
 
             if unavailable_reasons:
                 unavailable_resources[resource] = {
-                    'reasons': ", ".join(unavailable_reasons)
+                    'reasons': ", ".join(unavailable_reasons),
                 }
 
-                
         available_resources = [resource for resource in resources if resource not in list(unavailable_resources.keys())]
-        
+
         # Check usecase
         try:
             usecase = UseCase.string_to_usecase(usecase)
