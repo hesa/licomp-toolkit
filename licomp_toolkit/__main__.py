@@ -48,13 +48,20 @@ class LicompToolkitParser(LicompParser):
             else:
                 detailed_report = True
 
-                
+            resources = args.resources
+            unsupported = []
+            for resource in resources:
+                if not self.resource_avilable(resource):
+                    unsupported.append(resource)
+            if unsupported:
+                return f'Resources {", ".join(unsupported)} are not supported', ReturnCodes.LICOMP_UNSUPPORTED_RESOURCE.value, True
+
             expr_checker = ExpressionExpressionChecker()
             compatibilities = expr_checker.check_compatibility(self.__normalize_license(args.out_license),
                                                                self.__normalize_license(args.in_license),
                                                                args.usecase,
                                                                args.provisioning,
-                                                               resources=args.resources,
+                                                               resources=resources,
                                                                detailed_report=detailed_report)
 
             ret_code = compatibility_status_to_returncode(compatibilities['compatibility'])
@@ -113,6 +120,9 @@ class LicompToolkitParser(LicompParser):
         formatter = LicompToolkitFormatter.formatter(args.output_format)
         return formatter.format_licomp_versions(self.licomp_toolkit.versions()), ReturnCodes.LICOMP_OK.value, False
 
+    def resource_avilable(self, resource):
+        return resource in self.licomp_toolkit.licomp_resources().keys()
+
 def _working_return_code(return_code):
     return return_code < ReturnCodes.LICOMP_LAST_SUCCESSFUL_CODE.value
 
@@ -133,7 +143,6 @@ def main():
                         action='append',
                         help='use only specified licomp resource',
                         default=[])
-    # TODO: check if resource exists
 
     parser.add_argument('-nv', '--no-verbose',
                         action='store_true',
