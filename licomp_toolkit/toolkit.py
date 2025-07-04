@@ -302,9 +302,11 @@ class LicenseExpressionChecker():
 
 
 class ExpressionExpressionChecker():
-
-    #TODO: document that this class check
-    #  expr -> expr
+    """
+    This class can check, for compatibility;
+    * inbound license expression (e.g. MIT OR Apache-2.0)
+    * against outbound license expression (e.g. GPL-2.0-only OR BSD-2-Clause)
+    """
 
     def __init__(self):
         self.le_checker = LicenseExpressionChecker()
