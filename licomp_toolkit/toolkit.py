@@ -30,9 +30,13 @@ from licomp_toolkit.expr_parser import OR
 from licomp_toolkit.config import my_supported_api_version
 
 class LicompToolkit(Licomp):
+    """A class implementing Licomp, but for a misc Licomp resources
+    and packaging the responses into a new reply
+    (licomp_toolkit/reply_schema.json).
 
-    #TODO: document that this class check
-    #  lic -> lic
+    LicompToolkit can check a single license agaisnt another for
+    compatibility, but not license expressions.
+    """
     
     def __init__(self):
         Licomp.__init__(self)
