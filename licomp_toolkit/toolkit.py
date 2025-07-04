@@ -178,9 +178,10 @@ class LicompToolkit(Licomp):
         return cli_name
 
 class LicenseExpressionChecker():
-
-    #TODO: document that this class check
-    #  lic -> expr
+    """This class can check compatibility between a single outbound
+    license (e.g GPL-2.0-only) against an inbound license expression
+    (e.g. MIT OR X11)
+    """
 
     def __init__(self):
         self.le_parser = LicenseExpressionParser()
