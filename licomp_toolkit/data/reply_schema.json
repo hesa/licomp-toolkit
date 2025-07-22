@@ -31,12 +31,42 @@
       "description" : "Has the component been modified. Currently not used/implemented.",
       "enum": [ "unmodified", "modified"]
     },
+    "resources": {
+      "description": "Which resources are available, regardless of context",
+      "type": "array",
+      "items": {
+        "type" : "string"
+      }
+    },
+    "available_resources": {
+      "description": "Which resources are available given the context",
+      "type": "array",
+      "items": {
+        "type" : "string"
+      }
+    },
+    "unavailable_resources": {
+      "description": "Which resources are not available given the context",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "resource": {
+            "type": "string",
+            "description": "The resource name"
+},
+          "reasons": {
+            "type": "string",
+            "description": "The reason the resource is not available" }
+        }
+      }
+    },
     "compatibility" : {
       "$ref": "#/$defs/compatibility",
       "description" : "The inbound license expression."
     }
   },
-  "required" : [ "compatibility_report", "compatibility", "outbound", "inbound" , "usecase" ],
+  "required" : [ "compatibility_report", "compatibility", "outbound", "inbound" , "usecase", "resources", "unavailable_resources", "available_resources" ],
   "additionalProperties" : false,
   "$defs": {
     "compatibility_object": {
