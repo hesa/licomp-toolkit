@@ -37,7 +37,7 @@ class LicompToolkit(Licomp):
     LicompToolkit can check a single license agaisnt another for
     compatibility, but not license expressions.
     """
-    
+
     def __init__(self):
         Licomp.__init__(self)
         self.LICOMP_RESOURCES = {}
@@ -121,11 +121,14 @@ class LicompToolkit(Licomp):
         compatibilities['summary']['results'] = results
 
     # override top class
-    def outbound_inbound_compatibility(self, outbound, inbound, usecase, provisioning, resources):
+    def outbound_inbound_compatibility(self, outbound, inbound, usecase, provisioning, resources=None):
         logging.debug(f'{inbound} {outbound} ')
 
         compatibilities = {}
         compatibilities['compatibilities'] = []
+
+        if not resources:
+            resources = self.licomp_resources().keys()
 
         for resource_name in resources:
             resource = self.licomp_resources()[resource_name]
@@ -318,13 +321,25 @@ class ExpressionExpressionChecker():
 
     def check_compatibility(self, outbound, inbound, usecase, provisioning, resources=None, detailed_report=True):
 
+        # Check usecase
+        try:
+            usecase_obj = UseCase.string_to_usecase(usecase)
+        except KeyError:
+            raise LicompException(f'Usecase {usecase} not supported.', ReturnCodes.LICOMP_UNSUPPORTED_USECASE)
+
+        # Check provisioning
+        try:
+            provisioning_obj = Provisioning.string_to_provisioning(provisioning)
+        except KeyError:
+            raise LicompException(f'Provisioning {provisioning} not supported.', ReturnCodes.LICOMP_UNSUPPORTED_PROVISIONING)
+
         licomp_resources = list(self.licomp_toolkit.licomp_resources().keys())
         if not resources:
             resources = licomp_resources
         else:
             resources = resources
 
-        unavailable_resources = {}
+        unavailable_resources = []
 
         for resource in resources:
             resource_object = self.licomp_toolkit.licomp_resources()[resource]
@@ -339,39 +354,29 @@ class ExpressionExpressionChecker():
                 unavailable_reasons.append(f'Provisioning case "{provisioning}" not supported')
 
             if unavailable_reasons:
-                unavailable_resources[resource] = {
+                unavailable_resources.append({
+                    "resource": resource,
                     'reasons': ", ".join(unavailable_reasons),
-                }
+                })
 
-        available_resources = [resource for resource in resources if resource not in list(unavailable_resources.keys())]
-
-        # Check usecase
-        try:
-            usecase = UseCase.string_to_usecase(usecase)
-        except KeyError:
-            raise LicompException(f'Usecase {usecase} not supported.', ReturnCodes.LICOMP_UNSUPPORTED_USECASE)
-
-        # Check provisioning
-        try:
-            provisioning = Provisioning.string_to_provisioning(provisioning)
-        except KeyError:
-            raise LicompException(f'Provisioning {provisioning} not supported.', ReturnCodes.LICOMP_UNSUPPORTED_PROVISIONING)
+        unavailable_resource_keys = [resource['resource'] for resource in unavailable_resources]
+        available_resources = [resource for resource in resources if resource not in unavailable_resource_keys]
 
         inbound_parsed = self.le_parser.parse_license_expression(inbound)
         outbound_parsed = self.le_parser.parse_license_expression(outbound)
-        
+
         compatibility_object = self.__check_compatibility(outbound_parsed,
                                                           inbound_parsed,
-                                                          usecase,
-                                                          provisioning,
+                                                          usecase_obj,
+                                                          provisioning_obj,
                                                           resources,
                                                           detailed_report)
         return {
             'inbound': inbound,
             'outbound': outbound,
-            'usecase': UseCase.usecase_to_string(usecase),
+            'usecase': usecase,
             'resources': resources,
-            'provisioning': Provisioning.provisioning_to_string(provisioning),
+            'provisioning': provisioning,
             'compatibility': compatibility_object['compatibility'],
             'compatibility_report': compatibility_object,
             'unavailable_resources': unavailable_resources,
