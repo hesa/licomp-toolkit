@@ -49,13 +49,22 @@ class LicompToolkitParser(LicompParser):
                 detailed_report = True
 
             resources = args.resources
+            new_resources = []
             unsupported = []
             for resource in resources:
+                if 'licomp' not in resource:
+                    resource = f'licomp_{resource}'
+                else:
+                    resource = resource.replace('-', '_')
+
                 if not self.resource_avilable(resource):
                     unsupported.append(resource)
+                else:
+                    new_resources.append(resource)
             if unsupported:
-                return f'Resources {", ".join(unsupported)} are not supported', ReturnCodes.LICOMP_UNSUPPORTED_RESOURCE.value, True
+                return f'Resource(s) {", ".join(unsupported)} is/are not supported', ReturnCodes.LICOMP_UNSUPPORTED_RESOURCE.value, True
 
+            resources = new_resources
             expr_checker = ExpressionExpressionChecker()
             compatibilities = expr_checker.check_compatibility(self.__normalize_license(args.out_license),
                                                                self.__normalize_license(args.in_license),
