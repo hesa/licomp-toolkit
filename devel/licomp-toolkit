@@ -16,4 +16,4 @@ then
     ARGS="verify -il MIT -ol \"MIT OR X11\""
 fi     
 
-PYTHONPATH=${EXTRA_PYTHONPATH}:${PYTHONPATH} ${SCRIPT_DIR}/licomp_toolkit/__main__.py $* $ARGS
+echo PYTHONPATH=${EXTRA_PYTHONPATH}:${PYTHONPATH} ${SCRIPT_DIR}/licomp_toolkit/__main__.py $* $ARGS | bash
