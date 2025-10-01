@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
+from license_expression import Licensing
 
 from licomp.interface import Licomp
 from licomp.interface import UseCase
@@ -141,6 +142,9 @@ class LicompToolkit(Licomp):
         self.__add_meta(compatibilities)
 
         return compatibilities
+
+    def simplify(self, lic):
+        return str(Licensing([]).parse(lic).simplify())
 
     def supported_licenses(self):
         licenses = set()
