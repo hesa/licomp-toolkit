@@ -97,6 +97,12 @@ class LicompToolkitParser(LicompParser):
         provisioning_names.sort()
         return provisioning_names, ReturnCodes.LICOMP_OK.value, None
 
+    def simplify(self, args):
+        formatter = LicompToolkitFormatter.formatter(args.output_format)
+        normalized = self.__normalize_license(args.license)
+        simplified = self.licomp_toolkit.simplify(normalized)
+        return formatter.format_licomp_licenses(simplified), ReturnCodes.LICOMP_OK.value, None
+
     def supported_resources(self, args):
         formatter = LicompToolkitFormatter.formatter(args.output_format)
         return formatter.format_licomp_resources([f'{x.name()}:{x.version()}' for x in self.licomp_toolkit.licomp_resources().values()]), ReturnCodes.LICOMP_OK.value, False
@@ -159,6 +165,10 @@ def main():
                         default=[])
 
     # Command: list supported
+    parser_si = subparsers.add_parser('simplify', help='Normalize and simplify a license expression')
+    parser_si.set_defaults(which="simplify", func=lct_parser.simplify)
+    parser_si.add_argument("license")
+
     parser_sr = subparsers.add_parser('supported-resources', help='List all supported Licomp resources')
     parser_sr.set_defaults(which="supported_resources", func=lct_parser.supported_resources)
 

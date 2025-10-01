@@ -4,7 +4,7 @@
 
 import logging
 
-from license_expression import get_spdx_licensing
+from license_expression import Licensing
 from licomp.interface import LicompException
 from licomp.return_codes import ReturnCodes
 
@@ -18,7 +18,7 @@ COMPATIBILITY_INBOUND_LICENSE = 'inbound_license'
 class LicenseExpressionParser():
 
     def __init__(self):
-        self.licensing = get_spdx_licensing()
+        self.licensing = Licensing([])
 
         self.CLOSE_PARENTHESIS = ")"
         self.LICENSE_SYMBOL = "LicenseSymbol"
@@ -27,7 +27,6 @@ class LicenseExpressionParser():
     def parse_license_expression(self, expression):
         if not expression:
             raise LicompException("No license provided: " + str(expression), ReturnCodes.LICOMP_PARSE_ERROR)
-
         p = self.__parse_expression(self.licensing.parse(expression).pretty().replace('\n', ' '))
         return p
 
