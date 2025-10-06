@@ -16,6 +16,7 @@ from licomp_toolkit.config import cli_name
 from licomp_toolkit.config import description
 from licomp_toolkit.config import epilog
 from licomp_toolkit.schema_checker import LicompToolkitSchemaChecker
+from licomp_toolkit.suggester import OutboundSuggester
 
 from licomp.main_base import LicompParser
 from licomp.interface import UseCase
@@ -122,6 +123,21 @@ class LicompToolkitParser(LicompParser):
         except KeyError:
             return None, f'Use case "{args.usecase}" not supported. Supported use cases: {self.supported_usecases(args)[0]}'
 
+    def outbound_candidate(self, args):
+        suggester = OutboundSuggester()
+        licenses_to_check = None
+        if args.all_licenses:
+            licenses_to_check = self.licomp_toolkit.supported_licenses()
+
+        candidates = suggester.compat_licenses(args.license_expression,
+                                               args.usecase,
+                                               args.provisioning,
+                                               licenses_to_check,
+                                               args.resources)
+        formatter = LicompToolkitFormatter.formatter(args.output_format)
+
+        return formatter.format_licomp_licenses(candidates), ReturnCodes.LICOMP_OK.value, None
+
     def supports_provisioning(self, args):
         try:
             provisioning = Provisioning.string_to_provisioning(args.provisioning)
@@ -183,6 +199,14 @@ def main():
     parser_sp = subparsers.add_parser('supports-provisioning', help='List the Licomp resources supporting the provisioning')
     parser_sp.set_defaults(which="supports_provisioning", func=lct_parser.supports_provisioning)
     parser_sp.add_argument("provisioning")
+
+    parser_ob = subparsers.add_parser('outbound-candidate', help='Identify outbound candidates to a license expression')
+    parser_ob.set_defaults(which='outbound_candidate', func=lct_parser.outbound_candidate)
+    parser_ob.add_argument("license_expression")
+    parser_ob.add_argument('-al', '--all-licenses',
+                           action='store_true',
+                           help='Use all known licenses to identify outbound candidates',
+                           default=False)
 
     # Command: list versions (of all toolkit and licomp resources)
     parser_sr = subparsers.add_parser('versions', help='Output version of licomp-toolkit and all the licomp resources')
