@@ -134,6 +134,9 @@ class LicompToolkitParser(LicompParser):
                                                args.provisioning,
                                                licenses_to_check,
                                                args.resources)
+        if args.least_compatible:
+            candidates.reverse()
+
         formatter = LicompToolkitFormatter.formatter(args.output_format)
 
         return formatter.format_licomp_licenses(candidates), ReturnCodes.LICOMP_OK.value, None
@@ -206,6 +209,10 @@ def main():
     parser_ob.add_argument('-al', '--all-licenses',
                            action='store_true',
                            help='Use all known licenses to identify outbound candidates',
+                           default=False)
+    parser_ob.add_argument('-lc', '--least-compatible',
+                           action='store_true',
+                           help='Sort the license according to least compatibility (i.e. from restrictive to permissive. Default is to list permissive to restrictive.',
                            default=False)
 
     # Command: list versions (of all toolkit and licomp resources)
