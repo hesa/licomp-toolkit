@@ -100,7 +100,7 @@ class LicompToolkitParser(LicompParser):
 
     def simplify(self, args):
         formatter = LicompToolkitFormatter.formatter(args.output_format)
-        normalized = self.__normalize_license(args.license)
+        normalized = self.__normalize_license(' ' .join(args.license))
         simplified = self.licomp_toolkit.simplify(normalized)
         return formatter.format_licomp_licenses(simplified), ReturnCodes.LICOMP_OK.value, None
 
@@ -186,7 +186,7 @@ def main():
     # Command: list supported
     parser_si = subparsers.add_parser('simplify', help='Normalize and simplify a license expression')
     parser_si.set_defaults(which="simplify", func=lct_parser.simplify)
-    parser_si.add_argument("license")
+    parser_si.add_argument("license", type=str, nargs="+", help='License expression to simplify')
 
     parser_sr = subparsers.add_parser('supported-resources', help='List all supported Licomp resources')
     parser_sr.set_defaults(which="supported_resources", func=lct_parser.supported_resources)
