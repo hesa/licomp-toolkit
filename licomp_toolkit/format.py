@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
+import yaml
 
 class LicompToolkitFormatter():
 
@@ -12,6 +13,10 @@ class LicompToolkitFormatter():
             return JsonLicompToolkitFormatter()
         if fmt.lower() == 'text':
             return TextLicompToolkitFormatter()
+        if fmt.lower() == 'yaml':
+            return YamlLicompToolkitFormatter()
+        if fmt.lower() == 'yml':
+            return YamlLicompToolkitFormatter()
 
     def format_compatibilities(self, compat):
         return None
@@ -38,6 +43,20 @@ class JsonLicompToolkitFormatter():
 
     def format_licomp_versions(self, licomp_versions):
         return json.dumps(licomp_versions, indent=4)
+
+class YamlLicompToolkitFormatter():
+
+    def format_compatibilities(self, compat):
+        return yaml.safe_dump(compat, indent=4)
+
+    def format_licomp_resources(self, licomp_resources):
+        return yaml.safe_dump(licomp_resources, indent=4)
+
+    def format_licomp_licenses(self, licomp_licenses):
+        return yaml.safe_dump(licomp_licenses, indent=4)
+
+    def format_licomp_versions(self, licomp_versions):
+        return yaml.safe_dump(licomp_versions, indent=4)
 
 class TextLicompToolkitFormatter():
 
