@@ -6,3 +6,4 @@ licomp-proprietary == 0.5.*
 licomp-hermione == 0.5.*
 licomp-gnuguide == 0.5.*
 foss-flame
+PyYaml
