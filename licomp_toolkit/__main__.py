@@ -64,7 +64,6 @@ class LicompToolkitParser(LicompParser):
                     new_resources.append(resource)
             if unsupported:
                 return f'Resource(s) {", ".join(unsupported)} is/are not supported', ReturnCodes.LICOMP_UNSUPPORTED_RESOURCE.value, True
-
             resources = new_resources
             expr_checker = ExpressionExpressionChecker()
             compatibilities = expr_checker.check_compatibility(self.__normalize_license(args.out_license),
@@ -141,6 +140,23 @@ class LicompToolkitParser(LicompParser):
 
         return formatter.format_licomp_licenses(candidates), ReturnCodes.LICOMP_OK.value, None
 
+    def display_compatibility(self, args):
+        compats = {}
+        resources=['licomp_reclicense']
+        #resources = None
+        for outbound in args.licenses:
+            compats[outbound] = {}
+            for inbound in args.licenses:
+                ret = self.licomp_toolkit.outbound_inbound_compatibility(outbound,
+                                                                         inbound,
+                                                                         UseCase.LIBRARY,
+                                                                         Provisioning.BIN_DIST,
+                                                                         resources)
+                compats[outbound][inbound] = ret
+        formatter = LicompToolkitFormatter.formatter(args.output_format)
+        formatted = formatter.format_display_compatibilities(compats)
+        return formatted, ReturnCodes.LICOMP_OK.value, None
+    
     def supports_provisioning(self, args):
         try:
             provisioning = Provisioning.string_to_provisioning(args.provisioning)
@@ -183,7 +199,7 @@ def main():
                         help='keep compatibility report as short as possible',
                         default=[])
 
-    # Command: list supported
+    # Commands
     parser_si = subparsers.add_parser('simplify', help='Normalize and simplify a license expression')
     parser_si.set_defaults(which="simplify", func=lct_parser.simplify)
     parser_si.add_argument("license", type=str, nargs="+", help='License expression to simplify')
@@ -202,6 +218,13 @@ def main():
     parser_sp = subparsers.add_parser('supports-provisioning', help='List the Licomp resources supporting the provisioning')
     parser_sp.set_defaults(which="supports_provisioning", func=lct_parser.supports_provisioning)
     parser_sp.add_argument("provisioning")
+
+    parser_dc = subparsers.add_parser('display-compatibility', help='Display the compatibility between the supplied licenses')
+    parser_dc.set_defaults(which="display_compatibility", func=lct_parser.display_compatibility)
+    parser_dc.add_argument("licenses",
+                           type=str,
+                           nargs='+',
+                           default=[])
 
     parser_ob = subparsers.add_parser('outbound-candidate', help='Identify outbound candidates to a license expression')
     parser_ob.set_defaults(which='outbound_candidate', func=lct_parser.outbound_candidate)
