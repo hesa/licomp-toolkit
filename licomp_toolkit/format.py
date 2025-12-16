@@ -13,24 +13,48 @@ class LicompToolkitFormatter():
             return JsonLicompToolkitFormatter()
         if fmt.lower() == 'text':
             return TextLicompToolkitFormatter()
-        if fmt.lower() == 'yaml':
+        if fmt.lower() == 'yaml' or fmt.lower() == 'yml':
             return YamlLicompToolkitFormatter()
-        if fmt.lower() == 'yml':
-            return YamlLicompToolkitFormatter()
+        if fmt.lower() == 'dot':
+            return DotLicompToolkitFormatter()
 
     def format_compatibilities(self, compat):
-        return None
+        raise Exception(f'{self.__class__.__name__} cannot format compatibilities.')
+
+    def _pre_format_display_compatibilities(self, compats):
+        licenses = list(compats.keys())
+        finished = {}
+        for outbound in licenses:
+            finished[outbound] = {}
+            for inbound in licenses:
+                finished[outbound][inbound] = False
+                
+        lines = {}
+        
+        for outbound in licenses:
+            for inbound in licenses:
+                if finished[outbound][inbound] and finished[inbound][outbound]:
+                    continue
+                if outbound == inbound:
+                    finished[outbound][inbound] = ['yes']
+                    finished[inbound][outbound] = ['yes']
+                else:
+                    outbound_compat = compats[outbound][inbound]['summary']['compatibility_statuses']
+                    inbound_compat = compats[inbound][outbound]['summary']['compatibility_statuses']
+                    finished[outbound][inbound] = list(outbound_compat.keys())
+                    finished[inbound][outbound] = list(inbound_compat.keys())
+        return finished
 
     def format_licomp_resources(self, licomp_resources):
-        return None
+        raise Exception(f'{self.__class__.__name__} cannot format licomp resources.')
 
     def format_licomp_licenses(self, licomp_licenses):
-        return None
+        raise Exception(f'{self.__class__.__name__} cannot format licomp licenses.')
 
     def format_licomp_versions(self, licomp_versions):
-        return None
+        raise Exception(f'{self.__class__.__name__} cannot format licomp versions.')
 
-class JsonLicompToolkitFormatter():
+class JsonLicompToolkitFormatter(LicompToolkitFormatter):
 
     def format_compatibilities(self, compat):
         return json.dumps(compat, indent=4)
@@ -44,7 +68,11 @@ class JsonLicompToolkitFormatter():
     def format_licomp_versions(self, licomp_versions):
         return json.dumps(licomp_versions, indent=4)
 
-class YamlLicompToolkitFormatter():
+    def format_display_compatibilities(self, compats):
+        display_compats = self._pre_format_display_compatibilities(compats)
+        return json.dumps(display_compats, indent=4)
+
+class YamlLicompToolkitFormatter(LicompToolkitFormatter):
 
     def format_compatibilities(self, compat):
         return yaml.safe_dump(compat, indent=4)
@@ -58,7 +86,11 @@ class YamlLicompToolkitFormatter():
     def format_licomp_versions(self, licomp_versions):
         return yaml.safe_dump(licomp_versions, indent=4)
 
-class TextLicompToolkitFormatter():
+    def format_display_compatibilities(self, compats):
+        display_compats = self._pre_format_display_compatibilities(compats)
+        return yaml.safe_dump(display_compats, indent=4)
+
+class TextLicompToolkitFormatter(LicompToolkitFormatter):
 
     def format_licomp_resources(self, licomp_resources):
         return "\n".join(licomp_resources)
@@ -161,3 +193,98 @@ class TextLicompToolkitFormatter():
         for k, v in licomp_versions['licomp-resources'].items():
             res.append(f'{k}: {v}')
         return '\n'.join(res)
+
+    def format_display_compatibilities(self, compats):
+        # possible compats are:
+        # no (red)
+        # yes (green)
+        # depends (yellow)
+        # unsupported (yellow)
+        # unknown (yellow)
+        # mixed (yellow)
+        display_compats = self._pre_format_display_compatibilities(compats)
+        licenses = list(display_compats.keys())
+        
+        lines = []
+        for outbound in licenses:
+            for inbound in licenses:
+                lines.append(f'{outbound:30s} {"---->":10s} {inbound:30s}: {", ".join(display_compats[outbound][inbound])}')
+        return '\n'.join(lines)
+
+class DotLicompToolkitFormatter(LicompToolkitFormatter):
+    
+    def _compat_line_color(self, compats):
+        _line_map = {
+            'unknown': 'style="dotted"',
+            'depends': 'style="dotted"',
+            'unsupported': 'style="dotted"',
+            'mixed': 'style="dotted"',
+        }
+        _color_map = {
+            'yes': 'darkgreen',
+            'no': 'darkred'
+        }
+        same = True
+        value = None
+        for compat in compats:
+            if compat == 'unsupported':
+                continue
+            #print(compat)
+            if not value:
+                value = compat
+            else:
+                if compat != value:
+                    same = False
+
+        if same:
+            line = _line_map.get(value, '')
+            color = _color_map.get(value, 'darkblue')
+        else:
+            line = _line_map['mixed']
+            color = 'darkblue'
+
+        return line, color
+            
+    def _license_license_compat(self, outbound, inbound, outbound_compat, inbound_compat):
+        out_line, out_color = self._compat_line_color(outbound_compat)
+        in_line, in_color = self._compat_line_color(inbound_compat)
+        
+        if out_line == in_line and out_color == in_color:
+            return (f'    "{outbound}" -> "{inbound}" [dir="both" color="{out_color}" {out_line}]')
+        else:
+            return '\n'.join([f'    "{outbound}" -> "{inbound}" [color="{out_color}" {out_line}]',
+                              f'    "{inbound}" -> "{outbound}" [color="{in_color}" {in_line}]'])
+
+    def format_display_compatibilities(self, compats):
+        # possible compats are:
+        # no (red)
+        # yes (green)
+        # depends (yellow)
+        # unsupported (yellow)
+        # unknown (yellow)
+        # mixed (yellow)
+        display_compats = self._pre_format_display_compatibilities(compats)
+        licenses = list(display_compats.keys())
+        
+        lines = []
+        finished = {}
+        usecase = compats[licenses[0]][licenses[0]]['compatibilities'][0]['usecase']
+        lines.append('digraph depends {')
+        lines.append(f'    graph [label="License Compatibility Graph ({usecase})" labelloc=t]')
+        lines.append('    node [shape=plaintext]')
+        for outbound in licenses:
+            finished[outbound] = {}
+            for inbound in licenses:
+                if inbound == outbound:
+                    continue
+                if not display_compats[outbound][inbound]:
+                    #print("skip.... since " + str(display_compats[outbound][inbound]))
+                    continue
+
+                #print(f'{outbound} ---> {inbound}')
+                lines.append(self._license_license_compat(outbound, inbound, display_compats[outbound][inbound], display_compats[inbound][outbound]))
+                display_compats[outbound][inbound] = False
+                display_compats[inbound][outbound] = False
+
+        lines.append('}')
+        return '\n'.join(lines)
