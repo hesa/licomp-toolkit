@@ -17,6 +17,7 @@ from licomp_toolkit.config import description
 from licomp_toolkit.config import epilog
 from licomp_toolkit.schema_checker import LicompToolkitSchemaChecker
 from licomp_toolkit.suggester import OutboundSuggester
+from licomp_toolkit.display_compatibility import DisplayCompatibility
 
 from licomp.main_base import LicompParser
 from licomp.interface import UseCase
@@ -141,20 +142,14 @@ class LicompToolkitParser(LicompParser):
         return formatter.format_licomp_licenses(candidates), ReturnCodes.LICOMP_OK.value, None
 
     def display_compatibility(self, args):
-        compats = {}
-        resources=['licomp_reclicense']
-        #resources = None
-        for outbound in args.licenses:
-            compats[outbound] = {}
-            for inbound in args.licenses:
-                ret = self.licomp_toolkit.outbound_inbound_compatibility(outbound,
-                                                                         inbound,
-                                                                         UseCase.LIBRARY,
-                                                                         Provisioning.BIN_DIST,
-                                                                         resources)
-                compats[outbound][inbound] = ret
+        display_compat = DisplayCompatibility(self.licomp_toolkit)
+        compats = display_compat.display_compatibility(args.licenses,
+                                                       UseCase.string_to_usecase(args.usecase),
+                                                       Provisioning.string_to_provisioning(args.provisioning),
+                                                       args.resources)
         formatter = LicompToolkitFormatter.formatter(args.output_format)
-        formatted = formatter.format_display_compatibilities(compats)
+        formatted = formatter.format_display_compatibilities(compats,
+                                                             { 'discard_unsupported': args.discard_unsupported_licenses })
         return formatted, ReturnCodes.LICOMP_OK.value, None
     
     def supports_provisioning(self, args):
@@ -225,6 +220,10 @@ def main():
                            type=str,
                            nargs='+',
                            default=[])
+    parser_dc.add_argument('-dul', '--discard-unsupported-licenses',
+                           action='store_true',
+                           help='Discard unsupported licenses from the output',
+                           default=False)
 
     parser_ob = subparsers.add_parser('outbound-candidate', help='Identify outbound candidates to a license expression')
     parser_ob.set_defaults(which='outbound_candidate', func=lct_parser.outbound_candidate)
