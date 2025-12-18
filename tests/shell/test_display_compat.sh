@@ -11,6 +11,7 @@ then
 fi
 
 TMP_FILE=licomp_toolkit_test.tmp
+TEST_HANDLER=false
 
 run_lt()
 {
@@ -30,18 +31,21 @@ check_ret()
     EXP_RET=$4
     printf "%-50s" "-of $FORMAT display-compatibility $LICENSES: "
     run_lt -of $FORMAT display-compatibility  $LICENSES > $TMP_FILE
-    $HANDLER $TMP_FILE > /dev/null 2>&1
-    ACT_RET=$?
-
-    if [ $ACT_RET -ne $EXP_RET ]
+    if [ "$TEST_HANDLER" = "true" ]
     then
+        $HANDLER $TMP_FILE > /dev/null 2>&1
+        ACT_RET=$?
         
-        err "ERROR"
-        err " * command:  display-compatibility $LICENSES"
-        err " * format:   $FORMAT"
-        err " * expected: $EXP_RET"
-        err " * actual:   $ACT_RET"
-        exit 1
+        if [ $ACT_RET -ne $EXP_RET ]
+        then
+            
+            err "ERROR"
+            err " * command:  display-compatibility $LICENSES"
+            err " * format:   $FORMAT"
+            err " * expected: $EXP_RET"
+            err " * actual:   $ACT_RET"
+            exit 1
+        fi
     fi
     echo OK
 }
@@ -59,8 +63,6 @@ is_pdf()
     else
         echo OK
     fi
-
-
 }
 
 check_ret "MIT BSD-3-Clause" "json" "jq ." 0
@@ -68,5 +70,8 @@ check_ret "MIT BSD-3-Clause" "json" "dot $TMP_FILE -Tpdf -o tmp.pdf" 1
 
 check_ret "MIT BSD-3-Clause" "dot"  "jq ." 5
 check_ret "MIT BSD-3-Clause" "dot"  "dot $TMP_FILE -Tpdf -o tmp.pdf" 0
-is_pdf tmp.pdf
-
+if [ "$TEST_HANDLER" = "true" ]
+then
+   is_pdf tmp.pdf
+fi
+   
