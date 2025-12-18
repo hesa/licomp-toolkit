@@ -62,9 +62,11 @@ compatibles()
     validate_reply "BSD-3-Clause OR MIT" "BSD-2-Clause AND ISC" 0 0 
     validate_reply "BSD-3-Clause OR GPL-2.0-only" "BSD-2-Clause AND ISC" 0 0 
     validate_reply "BSD-3-Clause OR GPL-2.0-only" "BSD-2-Clause AND Apache-2.0" 0 0 
-    validate_reply  "BSD-2-Clause OR Apache-2.0" "GPL-2.0-only" 0 0 
-    validate_reply "Apache-2.0" "GPL-3.0-only" 0 0 
-#    validate_reply "GPL-3.0-only" "Apache-2.0" 0 0 
+    validate_reply  "BSD-2-Clause OR Apache-2.0" "GPL-2.0-only" 0 0
+    # 9 is mixed 
+    validate_reply "Apache-2.0" "GPL-3.0-only" 9 0 
+    # 9 is no
+    validate_reply "GPL-3.0-only" "Apache-2.0" 2 0 
 }
 
 incompatibles()

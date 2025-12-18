@@ -368,7 +368,6 @@ class ExpressionExpressionChecker():
 
         inbound_parsed = self.le_parser.parse_license_expression(inbound)
         outbound_parsed = self.le_parser.parse_license_expression(outbound)
-
         compatibility_object = self.__check_compatibility(outbound_parsed,
                                                           inbound_parsed,
                                                           usecase_obj,
@@ -376,8 +375,8 @@ class ExpressionExpressionChecker():
                                                           resources,
                                                           detailed_report)
         return {
-            'inbound': inbound,
-            'outbound': outbound,
+            'inbound': str(inbound),
+            'outbound': str(outbound),
             'usecase': usecase,
             'resources': resources,
             'provisioning': provisioning,
