@@ -59,6 +59,7 @@ jobs:
 
       # Something to generate files
       - run: |
+         apt install jq
          pip install -r requirements.txt
          pip install -r requirements-dev.txt
          make test
