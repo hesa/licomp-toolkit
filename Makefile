@@ -10,6 +10,7 @@ clean:
 	rm -fr licomp_toolkit/__pycache__
 	rm -fr tests/python/__pycache__
 	rm -fr .pytest_cache
+	rm -f  licomp_toolkit_test.tmp tmp.pdf
 
 .PHONY: build
 build:
@@ -34,10 +35,13 @@ unit-test-local-verbose:
 cli-test:
 	tests/shell/test-cli.sh
 	tests/shell/test_returns.sh
+	tests/shell/test_display_compat.sh
+	tests/shell/test_validate.sh
 
 cli-test-local:
 	tests/shell/test-cli.sh --local
 	tests/shell/test_returns.sh --local
+	tests/shell/test_display_compat.sh --local
 
 test: unit-test cli-test
 
