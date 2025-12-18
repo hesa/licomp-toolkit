@@ -44,6 +44,9 @@ jobs:
     - name: CLI check
       run: |
         tests/shell/test-cli.sh
+        tests/shell/test_display_compat.sh
+        tests/shell/test_returns.sh
+        tests/shell/test_validate.sh
 
   generate:
     runs-on: ubuntu-latest
