@@ -43,7 +43,6 @@ jobs:
         make test
     - name: CLI check
       run: |
-        apt install jq
         tests/shell/test-cli.sh
         tests/shell/test_display_compat.sh
         tests/shell/test_returns.sh
@@ -59,7 +58,6 @@ jobs:
 
       # Something to generate files
       - run: |
-         apt install jq
          pip install -r requirements.txt
          pip install -r requirements-dev.txt
          make test
