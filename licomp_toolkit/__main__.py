@@ -149,9 +149,9 @@ class LicompToolkitParser(LicompParser):
                                                        args.resources)
         formatter = LicompToolkitFormatter.formatter(args.output_format)
         formatted = formatter.format_display_compatibilities(compats,
-                                                             { 'discard_unsupported': args.discard_unsupported_licenses })
+                                                             {'discard_unsupported': args.discard_unsupported_licenses})
         return formatted, ReturnCodes.LICOMP_OK.value, None
-    
+
     def supports_provisioning(self, args):
         try:
             provisioning = Provisioning.string_to_provisioning(args.provisioning)
