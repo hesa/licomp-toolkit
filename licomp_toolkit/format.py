@@ -271,7 +271,7 @@ class DotLicompToolkitFormatter(LicompToolkitFormatter):
         finished = {}
         usecase = compats[licenses[0]][licenses[0]]['compatibilities'][0]['usecase']
         lines.append('digraph depends {')
-        lines.append(f'    graph [label="License Compatibility Graph {usecase})" labelloc=t]')
+        lines.append(f'    graph [label="License Compatibility Graph ({usecase})" labelloc=t]')
         lines.append('    node [shape=plaintext]')
         for outbound in licenses:
             finished[outbound] = {}
