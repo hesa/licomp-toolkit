@@ -16,7 +16,7 @@ build:
 	rm -fr build && python3 setup.py sdist
 
 lint:
-	PYTHONPATH=. flake8 licomp_toolkit
+	PYTHONPATH=. python3.11 -m flake8 licomp_toolkit
 
 check_version:
 	@echo -n "Checking api versions: "
