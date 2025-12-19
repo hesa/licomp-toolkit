@@ -42,24 +42,6 @@ class LicompToolkit(Licomp):
     def __init__(self):
         Licomp.__init__(self)
         self.LICOMP_RESOURCES = {}
-        self.LICOMP_RESOURCE_NAMES = {
-            "osadl": {
-                "package": "licomp_osadl.osadl",
-                "class": "LicompOsadl",
-            },
-            "reclicense": {
-                "package": "licomp_reclicense.reclicense",
-                "class": "LicompReclicense",
-            },
-            "hermione": {
-                "package": "licomp_hermione.hermione",
-                "class": "LicompHermione",
-            },
-            "dwheeler": {
-                "package": "licomp_dwheeler.dwheeler",
-                "class": "LicompDw",
-            },
-        }
 
     def supported_api_version(self):
         return my_supported_api_version
