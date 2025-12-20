@@ -106,7 +106,7 @@ class LicompToolkitParser(LicompParser):
 
     def supported_resources(self, args):
         formatter = LicompToolkitFormatter.formatter(args.output_format)
-        return formatter.format_licomp_resources([f'{x.name()}:{x.version()}' for x in self.licomp_toolkit.licomp_resources().values()]), ReturnCodes.LICOMP_OK.value, False
+        return formatter.format_licomp_resources(self.licomp_toolkit.licomp_resources_long()), ReturnCodes.LICOMP_OK.value, False
 
     def supports_license(self, args):
         lic = args.license
