@@ -93,25 +93,33 @@ class YamlLicompToolkitFormatter(LicompToolkitFormatter):
 
 class TextLicompToolkitFormatter(LicompToolkitFormatter):
 
+    def _format_licomp_resource(self, licomp_resource):
+        name = licomp_resource['name']
+        version = licomp_resource['version']
+        usecases = ','.join(licomp_resource['usecases'])
+        provisionings = ','.join(licomp_resource['provisionings'])
+        resource_type = licomp_resource['type']
+        return f'{name}:{version}:{usecases}:{provisionings}:{resource_type}'
+
     def format_licomp_resources(self, licomp_resources):
-        return "\n".join(licomp_resources)
+        return '\n'.join([self._format_licomp_resource(x) for x in licomp_resources])
 
     def format_licomp_licenses(self, licomp_licenses):
-        return "\n".join(licomp_licenses)
+        return '\n'.join(licomp_licenses)
 
-    def __get_responses(self, results, indent=""):
+    def __get_responses(self, results, indent=''):
         output = []
         for res in ['yes', 'no', 'schneben']:
             result = results.get(res)
             if not result:
                 count = 0
             else:
-                count = result["count"]
+                count = result['count']
             output.append(f'{indent}{res}: {count}')
 
         return output
 
-    def __compatibility_statuses(self, statuses, indent=""):
+    def __compatibility_statuses(self, statuses, indent=''):
         output = []
         for status, values in statuses.items():
             resources = []
@@ -121,7 +129,7 @@ class TextLicompToolkitFormatter(LicompToolkitFormatter):
 
         return output
 
-    def __statuses(self, statuses, indent=""):
+    def __statuses(self, statuses, indent=''):
         output = []
         for status, values in statuses.items():
             resources = []
