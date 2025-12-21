@@ -41,7 +41,9 @@ class LicompToolkit(Licomp):
 
     def __init__(self):
         Licomp.__init__(self)
-        self.LICOMP_RESOURCES = {}
+        self._licomp_reource_classes = [LicompReclicense, LicompOsadl, LicompHermione, LicompProprietary, LicompDw, GnuQuickGuideLicense]
+        
+        self._licomp_resources = {}
 
     def supported_api_version(self):
         return my_supported_api_version
@@ -58,24 +60,40 @@ class LicompToolkit(Licomp):
         compatibilities["meta"]['disclaimer'] = disclaimer
 
     def licomp_resources(self):
-        if not self.LICOMP_RESOURCES:
-            for licomp in [LicompReclicense, LicompOsadl, LicompHermione, LicompProprietary, LicompDw, GnuQuickGuideLicense]:
+        if not self._licomp_resources:
+            for licomp in self._licomp_reource_classes:
                 licomp_instance = licomp()
-                self.LICOMP_RESOURCES[licomp_instance.name()] = licomp_instance
-        return self.LICOMP_RESOURCES
+                self._licomp_resources[licomp_instance.name()] = licomp_instance
+        return self._licomp_resources
+
+    def licomp_resources_long(self):
+        _resources = []
+        for resource in self.licomp_resources().values():
+            _resources.append({
+                'name': resource.name(),
+                'version': resource.version(),
+                'default': self._resource_is_default(resource)
+            })
+        return _resources
+
+    def _resource_is_optional(self, resource):
+        return resource.name() in ['licomp_proprietary']
+
+    def _resource_is_default(self, resource):
+        return not self._resource_is_optional(resource)
 
     def __summarize_compatibility(self, compatibilities, outbound, inbound, usecase, provisioning, resources):
         compatibilities["summary"] = {}
         statuses = {}
         compats = {}
         compatibilities['nr_licomp'] = len(resources)
-        #        for resource_name in self.licomp_resources():
+        #        for resource_name in self._licomp_resources():
         for compat in compatibilities["compatibilities"]:
             logging.debug(f': {compat}')
             logging.debug(f': {compat["resource_name"]}')
             self.__add_to_list(statuses, compat['status'], compat)
             self.__add_to_list(compats, compat['compatibility_status'], compat)
-        compatibilities["summary"]["resources"] = [f'{x.name()}:{x.version()}' for x in self.licomp_resources().values()]
+        compatibilities["summary"]["resources"] = [f'{x.name()}:{x.version()}' for x in self._licomp_resources().values()]
         compatibilities["summary"]["outbound"] = outbound
         compatibilities["summary"]["inbound"] = inbound
         compatibilities["summary"]["usecase"] = UseCase.usecase_to_string(usecase)
@@ -111,10 +129,10 @@ class LicompToolkit(Licomp):
         compatibilities['compatibilities'] = []
 
         if not resources:
-            resources = self.licomp_resources().keys()
+            resources = self._licomp_resources().keys()
 
         for resource_name in resources:
-            resource = self.licomp_resources()[resource_name]
+            resource = self._licomp_resources()[resource_name]
             logging.debug(f'-- resource: {resource.name()}')
 
             compat = resource.outbound_inbound_compatibility(outbound, inbound, usecase, provisioning=provisioning)
@@ -130,7 +148,7 @@ class LicompToolkit(Licomp):
 
     def supported_licenses(self):
         licenses = set()
-        for resource in self.licomp_resources().values():
+        for resource in self._licomp_resources().values():
             licenses.update(set(resource.supported_licenses()))
         licenses = list(licenses)
         licenses.sort()
@@ -138,13 +156,13 @@ class LicompToolkit(Licomp):
 
     def supported_provisionings(self):
         provisionings = set()
-        for resource in self.licomp_resources().values():
+        for resource in self._licomp_resources().values():
             provisionings.update(set(resource.supported_provisionings()))
         return list(provisionings)
 
     def supported_usecases(self):
         usecases = set()
-        for resource in self.licomp_resources().values():
+        for resource in self._licomp_resources().values():
             usecases.update(set(resource.supported_usecases()))
         return list(usecases)
 
