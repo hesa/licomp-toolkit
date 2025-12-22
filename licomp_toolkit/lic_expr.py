@@ -241,7 +241,7 @@ class LicenseExpressionChecker():
             OR: self.__summarise_compatibilities_or,
         }[operator](operands)
 
-class ExpressionExpressionChecker():
+class _OBSOLETE_ExpressionExpressionChecker():
 
     def __init__(self):
         self.le_checker = LicenseExpressionChecker()
@@ -251,7 +251,6 @@ class ExpressionExpressionChecker():
         return parsed_expression[parsed_expression[COMPATIBILITY_TYPE]]
 
     def check_compatibility(self, outbound, inbound, usecase, provisioning, detailed_report=False):
-
         inbound_parsed = self.le_parser.parse_license_expression(inbound)
 
         outbound_parsed = self.le_parser.parse_license_expression(outbound)

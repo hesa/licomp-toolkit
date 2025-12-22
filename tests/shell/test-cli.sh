@@ -72,7 +72,7 @@ test_version()
 test_supp_unsupp()
 {
     echo "# test supported/unsupported licenses"
-    test_licomp_tk "verify -il MIT -ol MIT" "${EXTRACT_COMPAT}.summary.results.yes.count" 5
+    test_licomp_tk "verify -il MIT -ol MIT" "${EXTRACT_COMPAT}.summary.results.yes.count" 1
     test_licomp_tk "verify -il MIT -ol MIT2" "${EXTRACT_COMPAT}.summary.results.nr_valid" 0
     test_licomp_tk "verify -il MIT2 -ol MIT" "${EXTRACT_COMPAT}.summary.results.nr_valid" 0
     test_licomp_tk "verify -il MIT2 -ol MIT2" "${EXTRACT_COMPAT}.summary.results.nr_valid" 0
@@ -94,16 +94,16 @@ test_snippet_bindist()
     echo "# snippet vs bin dist"
     test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" "${EXTRACT_COMPAT}.summary.results.nr_valid" 1
     test_licomp_tk "-u snippet verify -il BSD-3-Clause -ol LGPL-2.1-or-later" "${EXTRACT_COMPAT}.summary.results.yes.count" 1
-    test_licomp_tk "verify -il BSD-3-Clause -ol LGPL-2.1-or-later" "${EXTRACT_COMPAT}.summary.results.nr_valid" 4
-    test_licomp_tk "verify -il BSD-3-Clause -ol LGPL-2.1-or-later" "${EXTRACT_COMPAT}.summary.results.yes.count" 4
+    test_licomp_tk "verify -il BSD-3-Clause -ol LGPL-2.1-or-later" "${EXTRACT_COMPAT}.summary.results.nr_valid" 1
+    test_licomp_tk "verify -il BSD-3-Clause -ol LGPL-2.1-or-later" "${EXTRACT_COMPAT}.summary.results.yes.count" 1
 }
 
 test_supports_license()
 {
     echo "# supports license"
     test_licomp_tk_text " -of text supports-license MIT" " | wc -l" 6
-    test_licomp_tk_text " -of json supports-license MIT" " | jq .[] | wc -l" 6
-    test_licomp_tk_text " supports-license MIT" " | jq .[] | wc -l" 6
+    test_licomp_tk_text " -of json supports-license MIT" " | jq .[].name | wc -l" 6
+    test_licomp_tk_text " supports-license MIT" " | jq .[].name | wc -l" 6
 }
 
 test_supports_provisioning()

@@ -42,6 +42,26 @@ class LicompToolkitParser(LicompParser):
         LicompToolkitSchemaChecker().validate_file(args.file_name, deep=True)
         return None, ReturnCodes.LICOMP_OK.value, None
 
+    def _resources_to_use(self, args):
+        lt = LicompToolkit()
+        resources = args.resources
+        new_resources = []
+        unsupported = []
+        if args.resources == ['all']:
+            new_resources = list(lt.licomp_resources().keys())
+            return new_resources, []
+        for resource in resources:
+            if 'licomp' not in resource:
+                resource = f'licomp_{resource}'
+            else:
+                resource = resource.replace('-', '_')
+
+            if not self.resource_avilable(resource):
+                unsupported.append(resource)
+            else:
+                new_resources.append(resource)
+        return new_resources, unsupported
+
     def verify(self, args):
         formatter = LicompToolkitFormatter.formatter(self.args.output_format)
         try:
@@ -50,22 +70,9 @@ class LicompToolkitParser(LicompParser):
             else:
                 detailed_report = True
 
-            resources = args.resources
-            new_resources = []
-            unsupported = []
-            for resource in resources:
-                if 'licomp' not in resource:
-                    resource = f'licomp_{resource}'
-                else:
-                    resource = resource.replace('-', '_')
-
-                if not self.resource_avilable(resource):
-                    unsupported.append(resource)
-                else:
-                    new_resources.append(resource)
+            resources, unsupported = self._resources_to_use(args)
             if unsupported:
                 return f'Resource(s) {", ".join(unsupported)} is/are not supported', ReturnCodes.LICOMP_UNSUPPORTED_RESOURCE.value, True
-            resources = new_resources
             expr_checker = ExpressionExpressionChecker()
             compatibilities = expr_checker.check_compatibility(self.__normalize_license(args.out_license),
                                                                self.__normalize_license(args.in_license),
@@ -106,22 +113,30 @@ class LicompToolkitParser(LicompParser):
 
     def supported_resources(self, args):
         formatter = LicompToolkitFormatter.formatter(args.output_format)
-        return formatter.format_licomp_resources([f'{x.name()}:{x.version()}' for x in self.licomp_toolkit.licomp_resources().values()]), ReturnCodes.LICOMP_OK.value, False
+        return formatter.format_licomp_resources(self.licomp_toolkit.licomp_resources_long()), ReturnCodes.LICOMP_OK.value, False
+
+    def _supports_helper(self, key, value, output_format):
+        licomp_resources = [x for x in self.licomp_toolkit.licomp_resources_long() if value in x[key]]
+        formatter = LicompToolkitFormatter.formatter(output_format)
+        return formatter.format_licomp_resources(licomp_resources)
 
     def supports_license(self, args):
         lic = args.license
-        licomp_resources = [f'{x.name()}:{x.version()}' for x in self.licomp_toolkit.licomp_resources().values() if lic in x.supported_licenses()]
-        formatter = LicompToolkitFormatter.formatter(args.output_format)
-        return formatter.format_licomp_resources(licomp_resources), ReturnCodes.LICOMP_OK.value, None
+        if lic not in self.licomp_toolkit.supported_licenses():
+            return None, ReturnCodes.LICOMP_UNSUPPORTED_LICENSE.value, f'License "{args.license}" not supported.'
+        return self._supports_helper('licenses', lic, args.output_format), ReturnCodes.LICOMP_OK.value, None
 
     def supports_usecase(self, args):
-        try:
-            usecase = UseCase.string_to_usecase(args.usecase)
-            licomp_resources = [f'{x.name()}:{x.version()}' for x in self.licomp_toolkit.licomp_resources().values() if usecase in x.supported_usecases()]
-            formatter = LicompToolkitFormatter.formatter(args.output_format)
-            return formatter.format_licomp_resources(licomp_resources), ReturnCodes.LICOMP_OK.value, None
-        except KeyError:
-            return None, f'Use case "{args.usecase}" not supported. Supported use cases: {self.supported_usecases(args)[0]}'
+        usecase = args.usecase
+        if usecase not in [UseCase.usecase_to_string(x) for x in self.licomp_toolkit.supported_usecases()]:
+            return None, ReturnCodes.LICOMP_UNSUPPORTED_USECASE.value, f'Use case "{args.usecase}" not supported. Supported use cases: {self.supported_usecases(args)[0]}'
+        return self._supports_helper('usecases', usecase, args.output_format), ReturnCodes.LICOMP_OK.value, None
+
+    def supports_provisioning(self, args):
+        provisioning = args.provisioning
+        if provisioning not in [Provisioning.provisioning_to_string(x) for x in self.licomp_toolkit.supported_provisionings()]:
+            return None, ReturnCodes.LICOMP_UNSUPPORTED_PROVISIONING.value, f'Provisioning "{args.provisioning}" not supported. Supported provisionings: {self.supported_provisionings(args)[0]}'
+        return self._supports_helper('provisionings', provisioning, args.output_format), ReturnCodes.LICOMP_OK.value, None
 
     def outbound_candidate(self, args):
         suggester = OutboundSuggester()
@@ -152,15 +167,6 @@ class LicompToolkitParser(LicompParser):
                                                              {'discard_unsupported': args.discard_unsupported_licenses})
         return formatted, ReturnCodes.LICOMP_OK.value, None
 
-    def supports_provisioning(self, args):
-        try:
-            provisioning = Provisioning.string_to_provisioning(args.provisioning)
-            licomp_resources = [f'{x.name()}:{x.version()}' for x in self.licomp_toolkit.licomp_resources().values() if provisioning in x.supported_provisionings()]
-            formatter = LicompToolkitFormatter.formatter(args.output_format)
-            return formatter.format_licomp_resources(licomp_resources), ReturnCodes.LICOMP_OK.value, None
-        except KeyError:
-            return None, f'Provisioning "{args.provisioning}" not supported. Supported provisionings: {self.supported_provisionings(args)[0]}'
-
     def versions(self, args):
         formatter = LicompToolkitFormatter.formatter(args.output_format)
         return formatter.format_licomp_versions(self.licomp_toolkit.versions()), ReturnCodes.LICOMP_OK.value, False
@@ -169,7 +175,7 @@ class LicompToolkitParser(LicompParser):
         return resource in self.licomp_toolkit.licomp_resources().keys()
 
 def _working_return_code(return_code):
-    return return_code < ReturnCodes.LICOMP_LAST_SUCCESSFUL_CODE.value
+    return return_code >= 0 and return_code < ReturnCodes.LICOMP_LAST_SUCCESSFUL_CODE.value
 
 def main():
     logging.debug("Licomp Toolkit")
@@ -186,7 +192,7 @@ def main():
     parser.add_argument('-r', '--resources',
                         type=str,
                         action='append',
-                        help='use only specified licomp resource',
+                        help='use specified licomp resource. For a list use the commands \'supported-resources\'. Use \'all\' to use all',
                         default=[])
 
     parser.add_argument('-nv', '--no-verbose',
@@ -245,6 +251,11 @@ def main():
     if _working_return_code(code):
         if res:
             print(res)
+        else:
+            if err:
+                print(err, file=sys.stderr)
+            else:
+                pass
     else:
         print(res, file=sys.stderr)
 
