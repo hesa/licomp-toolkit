@@ -76,13 +76,13 @@ class LicompToolkit(Licomp):
 
     def licomp_resource_long(self, resource):
         return {
-                'name': resource.name(),
-                'version': resource.version(),
-                'usecases': [UseCase.usecase_to_string(x) for x in resource.supported_usecases()],
-                'provisionings': [Provisioning.provisioning_to_string(x) for x in resource.supported_provisionings()],
-                'licenses': resource.supported_licenses(),
-                'type': self._resource_type(resource)
-            }
+            'name': resource.name(),
+            'version': resource.version(),
+            'usecases': [UseCase.usecase_to_string(x) for x in resource.supported_usecases()],
+            'provisionings': [Provisioning.provisioning_to_string(x) for x in resource.supported_provisionings()],
+            'licenses': resource.supported_licenses(),
+            'type': self._resource_type(resource),
+        }
 
     def licomp_resources_long(self):
         _resources = []

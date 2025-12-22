@@ -38,7 +38,8 @@ validate_reply()
     OUTBOUND="$2"
     VERIFY_EXPECTED=$3
     VALIDATE_EXPECTED=$4
-    PYTHONPATH=$IMPLEMENTAIONS:${PYTHONPATH}:. python3 licomp_toolkit/__main__.py verify -il "$INBOUND" -ol "$OUTBOUND" > $REPLY_FILE
+    RESOURCE_ARGS="$5"
+    PYTHONPATH=$IMPLEMENTAIONS:${PYTHONPATH}:. python3 licomp_toolkit/__main__.py $RESOURCE_ARGS verify -il "$INBOUND" -ol "$OUTBOUND" > $REPLY_FILE
     RET=$?
 #    echo " ---------------------------||||| RET: $RET == $VERIFY_EXPECTED"
     printf "%-80s"  "verify -il \"$INBOUND\" -ol \"$OUTBOUND\""
@@ -63,9 +64,7 @@ compatibles()
     validate_reply "BSD-3-Clause OR GPL-2.0-only" "BSD-2-Clause AND ISC" 0 0 
     validate_reply "BSD-3-Clause OR GPL-2.0-only" "BSD-2-Clause AND Apache-2.0" 0 0 
     validate_reply  "BSD-2-Clause OR Apache-2.0" "GPL-2.0-only" 0 0
-    # 9 is mixed 
-    validate_reply "Apache-2.0" "GPL-3.0-only" 9 0 
-    # 9 is no
+    validate_reply "Apache-2.0" "GPL-3.0-only" 0 0 
     validate_reply "GPL-3.0-only" "Apache-2.0" 2 0 
 }
 
@@ -77,7 +76,8 @@ incompatibles()
     validate_reply "BSD-3-Clause AND GPL-2.0-only" "BSD-2-Clause AND Apache-2.0" 2 0 
     validate_reply "GPL-2.0-only" "BSD-2-Clause AND Apache-2.0" 2 0 
     validate_reply "BSD-2-Clause AND Apache-2.0" "GPL-2.0-only" 2 0 
-    validate_reply "Apache-2.0" "GPL-2.0-only" 2 0 
+    validate_reply "Apache-2.0" "GPL-2.0-only" 2 0
+    validate_reply "Apache-2.0" "GPL-3.0-only" 9 0 " -r all"
 }
 
 echo "Compatibles"

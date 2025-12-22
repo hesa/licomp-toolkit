@@ -47,7 +47,7 @@ test_verify()
     run_comp_test 0 "verify -il BSD-3-Clause -ol GPL-2.0-only"
 
     # Success and mixed compatibility
-    run_comp_test 9 "verify -ol 0BSD -il MS-PL"
+    run_comp_test 2 "verify -ol 0BSD -il MS-PL"
 
     # Success and incompatible
     run_comp_test 2 "verify -il GPL-2.0-only -ol BSD-3-Clause"

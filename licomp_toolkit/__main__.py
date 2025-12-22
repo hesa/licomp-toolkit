@@ -119,7 +119,7 @@ class LicompToolkitParser(LicompParser):
         licomp_resources = [x for x in self.licomp_toolkit.licomp_resources_long() if value in x[key]]
         formatter = LicompToolkitFormatter.formatter(output_format)
         return formatter.format_licomp_resources(licomp_resources)
-    
+
     def supports_license(self, args):
         try:
             return self._supports_helper('licenses', args.license, args.output_format), ReturnCodes.LICOMP_OK.value, None
