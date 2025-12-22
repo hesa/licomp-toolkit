@@ -121,22 +121,22 @@ class LicompToolkitParser(LicompParser):
         return formatter.format_licomp_resources(licomp_resources)
 
     def supports_license(self, args):
-        try:
-            return self._supports_helper('licenses', args.license, args.output_format), ReturnCodes.LICOMP_OK.value, None
-        except KeyError:
+        lic = args.license
+        if lic not in self.licomp_toolkit.supported_licenses():
             return None, ReturnCodes.LICOMP_UNSUPPORTED_LICENSE.value, f'License "{args.license}" not supported.'
+        return self._supports_helper('licenses', lic, args.output_format), ReturnCodes.LICOMP_OK.value, None
 
     def supports_usecase(self, args):
-        try:
-            return self._supports_helper('usecases', args.usecase, args.output_format), ReturnCodes.LICOMP_OK.value, None
-        except KeyError:
+        usecase = args.usecase
+        if usecase not in [UseCase.usecase_to_string(x) for x in self.licomp_toolkit.supported_usecases()]:
             return None, ReturnCodes.LICOMP_UNSUPPORTED_USECASE.value, f'Use case "{args.usecase}" not supported. Supported use cases: {self.supported_usecases(args)[0]}'
+        return self._supports_helper('usecases', usecase, args.output_format), ReturnCodes.LICOMP_OK.value, None
 
     def supports_provisioning(self, args):
-        try:
-            return self._supports_helper('provisionings', args.provisioning, args.output_format), ReturnCodes.LICOMP_OK.value, None
-        except KeyError:
+        provisioning = args.provisioning
+        if provisioning not in [Provisioning.provisioning_to_string(x) for x in self.licomp_toolkit.supported_provisionings()]:
             return None, ReturnCodes.LICOMP_UNSUPPORTED_PROVISIONING.value, f'Provisioning "{args.provisioning}" not supported. Supported provisionings: {self.supported_provisionings(args)[0]}'
+        return self._supports_helper('provisionings', provisioning, args.output_format), ReturnCodes.LICOMP_OK.value, None
 
     def outbound_candidate(self, args):
         suggester = OutboundSuggester()
@@ -252,7 +252,10 @@ def main():
         if res:
             print(res)
         else:
-            print(err, file=sys.stderr)
+            if err:
+                print(err, file=sys.stderr)
+            else:
+                pass
     else:
         print(res, file=sys.stderr)
 
