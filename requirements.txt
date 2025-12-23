@@ -5,5 +5,7 @@ licomp-dwheeler == 0.5.*
 licomp-proprietary == 0.5.*
 licomp-hermione == 0.5.*
 licomp-gnuguide == 0.5.*
+licomp-doubleopen == 0.1.*
+licomp-oslc-handbook == 0.1.*
 foss-flame
 PyYaml
