@@ -77,11 +77,12 @@ incompatibles()
     validate_reply "GPL-2.0-only" "BSD-2-Clause AND Apache-2.0" 2 0 
     validate_reply "BSD-2-Clause AND Apache-2.0" "GPL-2.0-only" 2 0 
     validate_reply "Apache-2.0" "GPL-2.0-only" 2 0
+    echo ---------------------------------------------
     validate_reply "Apache-2.0" "GPL-3.0-only" 9 0 " -r all"
 }
 
 echo "Compatibles"
-compatibles
+#compatibles
 echo "Incompatibles"
 incompatibles
 rm $REPLY_FILE

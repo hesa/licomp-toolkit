@@ -66,7 +66,7 @@ test_version()
     test_licomp_tk_text "--version" "" "$LT_VERSION"
     test_licomp_tk_text "--name" "" licomp-toolkit
     test_licomp_tk_text " -of text versions" "| head -1" "licomp-toolkit: $LT_VERSION"
-    test_licomp_tk_text " -of text versions" "| wc -l" "7"
+    test_licomp_tk_text " -of text versions" "| wc -l" "9"
 }
 
 test_supp_unsupp()
@@ -101,23 +101,23 @@ test_snippet_bindist()
 test_supports_license()
 {
     echo "# supports license"
-    test_licomp_tk_text " -of text supports-license MIT" " | wc -l" 6
-    test_licomp_tk_text " -of json supports-license MIT" " | jq .[].name | wc -l" 6
-    test_licomp_tk_text " supports-license MIT" " | jq .[].name | wc -l" 6
+    test_licomp_tk_text " -of text supports-license MIT" " | wc -l" 8
+    test_licomp_tk_text " -of json supports-license MIT" " | jq .[].name | wc -l" 8
+    test_licomp_tk_text " supports-license MIT" " | jq .[].name | wc -l" 8
 }
 
 test_supports_provisioning()
 {
     echo "# supports provisioning"
-    test_licomp_tk_text " -of text supports-provisioning binary-distribution" " | wc -l" 6
+    test_licomp_tk_text " -of text supports-provisioning binary-distribution" " | wc -l" 8
     test_licomp_tk_text " -of text supports-provisioning provide-webui" " | grep -v \"^$\" | wc -l " 0
 }
 
 test_supports_usecase()
 {
     echo "# supports usecase"
-    test_licomp_tk_text " -of text supports-usecase snippet" " | wc -l" 1
-    test_licomp_tk_text " -of text supports-usecase library" " | wc -l " 5
+    test_licomp_tk_text " -of text supports-usecase snippet" " | wc -l" 2
+    test_licomp_tk_text " -of text supports-usecase library" " | wc -l " 6
 }
 
 
@@ -128,4 +128,3 @@ test_snippet_bindist
 test_supports_license
 test_supports_provisioning
 test_supports_usecase
-
