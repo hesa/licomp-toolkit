@@ -27,6 +27,8 @@ def test_supported_resources():
     assert "licomp_hermione" in resource_names
     assert "licomp_dwheeler" in resource_names
     assert "licomp_gnuguide" in resource_names
+    assert "licomp_oslc_handbook" in resource_names
+    assert "licomp_doubleopen" in resource_names
 
 def test_supported_resources_standard():
     assert "licomp_reclicense" in standard_resource_names
@@ -35,6 +37,8 @@ def test_supported_resources_standard():
     assert "licomp_hermione" not in standard_resource_names
     assert "licomp_dwheeler" not in standard_resource_names
     assert "licomp_gnuguide" not in standard_resource_names
+    assert "licomp_oslc_handbook" in standard_resource_names
+    assert "licomp_doubleopen" in standard_resource_names
 
 def test_supported_resources_standard():
     assert "licomp_reclicense" not in optional_resource_names
@@ -43,3 +47,5 @@ def test_supported_resources_standard():
     assert "licomp_hermione" in optional_resource_names
     assert "licomp_dwheeler" in optional_resource_names
     assert "licomp_gnuguide" in optional_resource_names
+    assert "licomp_oslc_handbook" in optional_resource_names
+    assert "licomp_doubleopen" in optional_resource_names

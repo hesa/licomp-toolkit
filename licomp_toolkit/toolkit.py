@@ -18,6 +18,8 @@ from licomp_proprietary.proprietary import LicompProprietary
 from licomp_dwheeler.dwheeler import LicompDw
 from licomp_hermione.hermione import LicompHermione
 from licomp_gnuguide.gnuguide import GnuQuickGuideLicense
+from licomp_oslc_handbook.oslc_handbook import LicompOslcHandbook
+from licomp_doubleopen.doubleopen import LicompDoubleOpen
 
 from licomp_toolkit.config import disclaimer
 from licomp_toolkit.config import licomp_toolkit_version
@@ -47,7 +49,7 @@ class LicompToolkit(Licomp):
             self._licomp_resources[licomp_instance.name()] = licomp_instance
 
         self._licomp_resources_optional = {}
-        for licomp in [LicompHermione, LicompProprietary, LicompDw, GnuQuickGuideLicense]:
+        for licomp in [LicompHermione, LicompProprietary, LicompDw, GnuQuickGuideLicense, LicompOslcHandbook, LicompDoubleOpen]:
             licomp_instance = licomp()
             self._licomp_resources_optional[licomp_instance.name()] = licomp_instance
 
