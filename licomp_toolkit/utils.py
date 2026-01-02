@@ -6,6 +6,7 @@ import importlib
 import logging
 
 from licomp.interface import Licomp
+from licomp_toolkit.toolkit import LicompToolkit
 from licomp.return_codes import compatibility_status_to_returncode
 from licomp.return_codes import ReturnCodes
 
@@ -49,3 +50,27 @@ def _inc_map(_map, _name):
     new = curr + 1
     _map[_name] = new
     return _map
+
+def resource_avilable(resource, licomp_toolkit):
+    return resource in licomp_toolkit.licomp_resources().keys()
+
+def resources_to_use(args):
+    lt = LicompToolkit()
+    resources = args.resources
+    new_resources = []
+    unsupported = []
+    if args.resources == ['all']:
+        new_resources = list(lt.licomp_resources().keys())
+        return new_resources, []
+    for resource in resources:
+        if 'licomp' not in resource:
+            resource = f'licomp_{resource}'
+        else:
+            resource = resource.replace('-', '_')
+
+        
+        if not resource_avilable(resource, lt):
+            unsupported.append(resource)
+        else:
+            new_resources.append(resource)
+    return new_resources, unsupported
