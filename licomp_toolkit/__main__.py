@@ -18,6 +18,7 @@ from licomp_toolkit.config import epilog
 from licomp_toolkit.schema_checker import LicompToolkitSchemaChecker
 from licomp_toolkit.suggester import OutboundSuggester
 from licomp_toolkit.display_compatibility import DisplayCompatibility
+from licomp_toolkit.utils import resources_to_use
 
 from licomp.main_base import LicompParser
 from licomp.interface import UseCase
@@ -42,26 +43,6 @@ class LicompToolkitParser(LicompParser):
         LicompToolkitSchemaChecker().validate_file(args.file_name, deep=True)
         return None, ReturnCodes.LICOMP_OK.value, None
 
-    def _resources_to_use(self, args):
-        lt = LicompToolkit()
-        resources = args.resources
-        new_resources = []
-        unsupported = []
-        if args.resources == ['all']:
-            new_resources = list(lt.licomp_resources().keys())
-            return new_resources, []
-        for resource in resources:
-            if 'licomp' not in resource:
-                resource = f'licomp_{resource}'
-            else:
-                resource = resource.replace('-', '_')
-
-            if not self.resource_avilable(resource):
-                unsupported.append(resource)
-            else:
-                new_resources.append(resource)
-        return new_resources, unsupported
-
     def verify(self, args):
         formatter = LicompToolkitFormatter.formatter(self.args.output_format)
         try:
@@ -70,7 +51,7 @@ class LicompToolkitParser(LicompParser):
             else:
                 detailed_report = True
 
-            resources, unsupported = self._resources_to_use(args)
+            resources, unsupported = resources_to_use(args)
             if unsupported:
                 return f'Resource(s) {", ".join(unsupported)} is/are not supported', ReturnCodes.LICOMP_UNSUPPORTED_RESOURCE.value, True
             expr_checker = ExpressionExpressionChecker()
@@ -171,8 +152,6 @@ class LicompToolkitParser(LicompParser):
         formatter = LicompToolkitFormatter.formatter(args.output_format)
         return formatter.format_licomp_versions(self.licomp_toolkit.versions()), ReturnCodes.LICOMP_OK.value, False
 
-    def resource_avilable(self, resource):
-        return resource in self.licomp_toolkit.licomp_resources().keys()
 
 def _working_return_code(return_code):
     return return_code >= 0 and return_code < ReturnCodes.LICOMP_LAST_SUCCESSFUL_CODE.value
