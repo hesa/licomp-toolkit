@@ -43,7 +43,6 @@ class LicompToolkitParser(LicompParser):
         LicompToolkitSchemaChecker().validate_file(args.file_name, deep=True)
         return None, ReturnCodes.LICOMP_OK.value, None
 
-
     def verify(self, args):
         formatter = LicompToolkitFormatter.formatter(self.args.output_format)
         try:

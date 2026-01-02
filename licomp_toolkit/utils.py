@@ -68,7 +68,6 @@ def resources_to_use(args):
         else:
             resource = resource.replace('-', '_')
 
-        
         if not resource_avilable(resource, lt):
             unsupported.append(resource)
         else:
