@@ -19,6 +19,7 @@ from licomp_toolkit.schema_checker import LicompToolkitSchemaChecker
 from licomp_toolkit.suggester import OutboundSuggester
 from licomp_toolkit.display_compatibility import DisplayCompatibility
 from licomp_toolkit.utils import resources_to_use
+from licomp_toolkit.license_policy import LicensePolicyHandler
 
 from licomp.main_base import LicompParser
 from licomp.interface import UseCase
@@ -43,6 +44,22 @@ class LicompToolkitParser(LicompParser):
         LicompToolkitSchemaChecker().validate_file(args.file_name, deep=True)
         return None, ReturnCodes.LICOMP_OK.value, None
 
+    def apply_license_policy(self, args):
+        expr_checker = ExpressionExpressionChecker()
+        compatibilities = expr_checker.check_compatibility("MIT",
+                                                           "GPL-2.0-only OR (ISC AND 0BSD)",
+                                                           'library',
+                                                           'binary-distribution')
+#        lph = LicensePolicyHandler('tests/policy/license-policy.json')
+        lph = LicensePolicyHandler(resources=['licomp_reclicense'],
+                                   usecase='library',
+                                   provisioning='binary-distribution')
+        report = lph.apply_policy(compatibilities)
+        ret_code = compatibility_status_to_returncode(compatibilities['compatibility'])
+        formatter = LicompToolkitFormatter.formatter(self.args.output_format)
+        formatted_report = formatter.format_policy_report(report)
+        return formatted_report, ret_code, False
+    
     def verify(self, args):
         formatter = LicompToolkitFormatter.formatter(self.args.output_format)
         try:
@@ -225,6 +242,10 @@ def main():
     # Command: list versions (of all toolkit and licomp resources)
     parser_sr = subparsers.add_parser('versions', help='Output version of licomp-toolkit and all the licomp resources')
     parser_sr.set_defaults(which="versions", func=lct_parser.versions)
+
+    # Command: apply policy
+    parser_sr = subparsers.add_parser('apply-license-policy', help='')
+    parser_sr.set_defaults(which="apply_license_policy", func=lct_parser.apply_license_policy)
 
     res, code, err, func = lct_parser.run_noexit()
     if _working_return_code(code):
