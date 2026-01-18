@@ -75,15 +75,9 @@ class LicensePolicy:
         """
         lic1_list, lic1_index = self.list_presence(lic1, ignore_missing)
         lic2_list, lic2_index = self.list_presence(lic2, ignore_missing)
-        if not (lic1_list and lic2_list):
+        if (not lic1_list) and (not lic2_list):
             if ignore_missing:
-                print("---------------------------------------------|||1 " + str(lic1))
-                print("---------------------------------------------|||1 " + str(lic2))
-                print("---------------------------------------------|||1 " + str(lic1_list) + " " + str(lic1_index))
-                print("---------------------------------------------|||1 " + str(lic2_list) + " " + str(lic2_index))
-                print("---------------------------------------------|||1 " + str(self.allowed()))
-                print("---------------------------------------------|||1 " + str(self.avoided()))
-                print("---------------------------------------------|||1 " + str(self.denied()))
+                logging.debug(f'compare_preferences({lic1}, {lic2}, {ignore_missing}): ignore since both None')
                 return None
             
             raise LicensePolicyException(f'License "{lic}" is not present in any of the policy\'s lists.')
@@ -119,7 +113,7 @@ class LicensePolicy:
         return 1
     
     def preferred_score_inbounds(self, lic1, lic2):
-        print(f'preferred_score_inbounds({lic1}, {lic2})')
+        logging.debug(f'preferred_score_inbounds({lic1}, {lic2})')
         pref = self.compare_preferences(lic1['inbound_license'], lic2['inbound_license'])
         if pref < 0:
             return -1
@@ -145,7 +139,6 @@ class DefaultLicensePolicy(LicensePolicy):
             'avoided': [],
             'denied': []
         }
-        #print("Liverpool: " + str(self.policy))
 
     def __order(self, resources, usecase, provisioning):
         scores = {}
@@ -168,50 +161,50 @@ class DefaultLicensePolicy(LicensePolicy):
     def __licenses(self, resources, usecase, provisioning):
         self.resources = []
         self.licenses = []        
-        print("resources: " + str(self.lt.licomp_resources()))
-        print("resources: " + str(resources))
+
+        logging.debug(f'__licenses({resources}, {usecase}, {provisioning})')
         for resource in resources:
             for licomp_resource in self.lt.licomp_resources():
-                #print("lr:" + str(licomp_resource))
                 if resource == licomp_resource:
-                    #print("Found: " + str(self.lt.licomp_resources()[licomp_resource]))
-                    #print("Found: " + str(self.lt.licomp_resources()[licomp_resource].supported_licenses()))
                     self.licenses += self.lt.licomp_resources()[licomp_resource].supported_licenses()
                     self.resources.append(self.lt.licomp_resources()[licomp_resource])
-                    print("licenses: " + str(self.licenses))
+        logging.debug(f'__licenses({resources}, {usecase}, {provisioning}) ==> {self.licenses}')
 
 class LicensePolicyHandler:
 
     def __init__(self, policy_file=None, resources=None, usecase=None, provisioning=None):
-        print("PolicyHandler()")
+        logging.debug("LicensePolicyHandler()")
         if policy_file:
             self.policy = LicensePolicy(policy_file)
         else:
             self.policy = DefaultLicensePolicy(resources, usecase, provisioning)
 
-    def _usable_license(self, lic):
-        print()
-        print()
-        print("_usable_license " + str(lic))
-        print(str(lic))
-        print(str(lic.keys()))
+    def __is_license_expression(self, lic):
+        CONTAINS_AND = 'AND' in lic
+        CONTAINS_OR = 'OR' in lic
+        return CONTAINS_AND or CONTAINS_OR
+        
+        
+    def usable_license(self, lic):
         license_name =  lic['inbound_license']
-        policy_ok = license_name in (self.policy.allowed() + self.policy.avoided())
+        if self.__is_license_expression(license_name):
+            # should have been checked already, so skip
+            policy_ok = True
+        else:
+            policy_ok = license_name in (self.policy.allowed() + self.policy.avoided())
         compat_ok = lic['compatibility'] == 'yes'
 
         ret = policy_ok and compat_ok
-        print(f'_usable_license({lic}) |  policy_ok: {policy_ok}, compat_ok: {compat_ok}  ===> {ret}')
+        logging.debug(f'usable_license({lic}) |  policy_ok: {policy_ok}, compat_ok: {compat_ok}  ===> {ret}')
 
         return ret
             
-    def __scored_inbounds(self, inbounds, operator):
+    def scored_inbounds(self, inbounds, operator):
         if operator == "OR":
-            print(f'preferred_inbounds({inbounds}, {operator})')
-            filtered_inbound_licenses = [x for x in inbounds if self._usable_license(x)]
-            print(f'filtered_preferred_inbounds: {filtered_inbound_licenses}')
+            logging.debug(f'preferred_inbounds({inbounds}, {operator})')
+            filtered_inbound_licenses = [x for x in inbounds if self.usable_license(x)]
             sorted_inbounds = sorted(filtered_inbound_licenses, key=cmp_to_key(self.policy.preferred_score_inbounds))
-            print(f'sorted_inbounds: {[x["inbound_license"] for x in sorted_inbounds]})')
-
+            logging.debug(f'sorted_inbounds: {[x["inbound_license"] for x in sorted_inbounds]})')
             return sorted_inbounds
         elif operator == "AND":
             sorted_inbounds = sorted(inbounds, key=cmp_to_key(self.policy.preferred_score_inbounds))
@@ -237,46 +230,26 @@ class LicensePolicyHandler:
         }
 
     def __apply_to_compat_object(self, compat_object, indent=0):
-        print(" " * indent + "---------------------------")
-        print(" " * indent + "apply type: " + str(compat_object['compatibility_check']))
-        print(" " * indent + "apply out:  " + str(compat_object['outbound_license']))
-        print(" " * indent + "apply in:   " + str(compat_object['inbound_license']))
-        
         if 'outbound-expression' in compat_object['compatibility_check']:
             operator = compat_object['operator']
-            print(" " * indent + "* operator: " + operator)
-            #print("* out: "+ str(compat_object['outbound_license']) + "  not supported right now")
             for operand in compat_object['operands']:
-                print(" " * indent + "* operand:  "+ str(operand['compatibility_object']['outbound_license']))
                 self.__apply_to_compat_object(operand['compatibility_object'], indent+4)
         elif 'outbound-license' in compat_object['compatibility_check']:
             if 'inbound-expression' in compat_object['compatibility_check']:
-                print("keys: " + str(compat_object.keys()))
-                print("il:   " + str(compat_object['inbound_license']))
-                print("ol:   " + str(compat_object['outbound_license']))
-                print("type: " + str(compat_object.get('compatibility_type', None)))
-                #print("co:   " + str(compat_object))
-                print("co:   " + str(compat_object.get('compatibility_object', None)))
-                print("keys: " + str(compat_object.keys()))
-                print("il:   " + str(compat_object['inbound_license']))
-                print("ol:   " + str(compat_object['outbound_license']))
-                print("type: " + str(compat_object.get('compatibility_type', None)))
-                print("op:   " + str(compat_object.get('operator', 'noop')))
-                print("cc:   " + str(compat_object.get('compatibility_check', "nocheck")))
-                #                inner_compat_object = compat_object['compatibility_object']
                 inner_compat_object = compat_object
                 operator = inner_compat_object['operator']
-                print(" " * indent + "* operator:  " + operator)
                 # BASED ON OPERATOR ... sum up operands
                 inbounds = []
                 for operand in inner_compat_object['operands']:
                     self.__apply_to_compat_object(operand['compatibility_object'], indent+4)
-                    print(" " * indent + "  * operand:  "+ str(operand['compatibility_object']['inbound_license']) + " prefs: " + str(operand['compatibility_object']['policy_check']))
                     inbounds.append(operand['compatibility_object']['policy_check'])
-                scored_inbounds = self.__scored_inbounds(inbounds, operator)
-                print("0 preferred: " + str(len(scored_inbounds)))
-                print("1 preferred: " + str(scored_inbounds))
-                
+                scored_inbounds = self.scored_inbounds(inbounds, operator)
+                inbound_list = []
+                inbound_list_index = -1
+                if len(scored_inbounds) > 0:
+                    inbound_list = scored_inbounds[0]['inbound_list']              
+                    inbound_list_index = scored_inbounds[0]['inbound_list_index']
+
                 inner_compat_object['policy_check'] = {
                     'check_type': 'inbound',
                     'inbound_license': inner_compat_object['inbound_license'],
@@ -285,13 +258,11 @@ class LicensePolicyHandler:
                     'outbound_license_type': 'license',
                     'compatibility': compat_object['compatibility'],
                     'inbound_licenses': scored_inbounds,
-                    'inbound_list': scored_inbounds[0]['inbound_list'],
-                    'inbound_list_index': scored_inbounds[0]['inbound_list_index'],
+                    'inbound_list': inbound_list,
+                    'inbound_list_index': inbound_list_index,
                 }
-                print("policy_check: HIGH: " + str(inner_compat_object['policy_check']))
             if 'inbound-license' in compat_object['compatibility_check']:
                 pref = self.policy.most_preferred(compat_object['outbound_license'], compat_object['inbound_license'], ignore_missing=True)
-                print(" " * indent + f'FIX ME: {compat_object["outbound_license"]} --> {compat_object["inbound_license"]} : {compat_object["compatibility"]}  --->  {pref}')
 
                 lic = compat_object["inbound_license"]
                 list_nr, index = self.policy.list_presence(lic)
@@ -306,27 +277,12 @@ class LicensePolicyHandler:
                     'inbound_list': list_name,
                     'inbound_list_index': index,
                 }
-                #print(" " * indent + str(compat_object['policy_check']))
-                pass
         else:
             raise Exception("We should not be here")
         return None
 
     def apply_policy(self, compat_report):
         top_object = compat_report['compatibility_report']
-        print("Top object:")
-        print(" * out:  " + str(top_object['outbound_license']))
-        print(" * in:   " + str(top_object['inbound_license']))
-        print(" * type: " + str(top_object['compatibility_check']))
-
-        
-        #compat_object = top_object['compatibility_object']        
+        logging.debug("apply_policy")
         self.__apply_to_compat_object(top_object)
-        #print("compt check: " + str(compat_object['compatibility_check']))
-
-        print(json.dumps(top_object, indent=4))
-        print("done....")
-        import sys
-        sys.exit(1)
-        return None
-        
+        return compat_report
