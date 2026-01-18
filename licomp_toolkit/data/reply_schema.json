@@ -78,12 +78,12 @@
               "$ref": "#/$defs/compatibility",
               "description" : "The inbound license expression."
             },
-            "compatibility_type": {
-              "enum": [ "license" ],
-              "description": "Describing what is being checked. Can be either expression or license. In this case the value is \"license\"."
-            },
             "compatibility_check": {
               "$ref": "#/$defs/compatibility_check"
+            },
+            "check_class": {
+              "type": "string",
+              "description": "Names the class/function used to determine. For development purposes"
             },
             "inbound_license": {
               "$ref": "#/$defs/license",
@@ -123,7 +123,7 @@
               ]
             }
           },
-          "required": [ "compatibility", "compatibility_type", "compatibility_check", "inbound_license" , "outbound_license", "compatibility_object", "compatibility_details"],
+          "required": [ "compatibility", "compatibility_check", "inbound_license" , "outbound_license", "compatibility_object", "compatibility_details"],
           "additionalProperties" : false
         },
         {
@@ -132,12 +132,12 @@
               "$ref": "#/$defs/compatibility",
               "description" : "The inbound license expression."
             },
-            "compatibility_type": {
-              "enum": [ "expression" ],
-              "description": "Describing what is being checked. Can be either expression or license. In this case the value is \"expression\"."
-            },
             "compatibility_check": {
               "$ref": "#/$defs/compatibility_check"
+            },
+            "check_class": {
+              "type": "string",
+              "description": "Names the class/function used to determine. For development purposes"
             },
             "inbound_license": {
               "$ref": "#/$defs/license",
@@ -166,7 +166,7 @@
               "description": "The operands for the operator. The operands can be either a license or an operator."
             }
           },
-          "required": [ "compatibility", "compatibility_type", "compatibility_check", "inbound_license" , "outbound_license" , "operator", "operands" ],
+          "required": [ "compatibility", "compatibility_check", "inbound_license" , "outbound_license" , "operator", "operands" ],
           "additionalProperties" : false
         }
       ]
@@ -255,7 +255,7 @@
           "pattern": "^[0-9].[0-9](.[0-9]){0,1}$",
           "description" : "The api version of the program providing the reply"
         },
-        "resource_name1" : {
+        "resource_name" : {
           "type" : "string",
           "minLength": 1,
           "description" : "The name of the program providing the reply, e.g. licomp-osadl"
@@ -281,7 +281,7 @@
           "description" : "A URL pointing to the project page (or similar) for the program providing the resulting compatibility."
         }
       },
-      "required" : [ "status", "status_details", "outbound", "inbound", "usecase", "provisioning", "modification", "compatibility_status", "explanation", "api_version", "resource_name1", "resource_version", "resource_disclaimer", "data_url", "resource_url"],
+      "required" : [ "status", "status_details", "outbound", "inbound", "usecase", "provisioning", "modification", "compatibility_status", "explanation", "api_version", "resource_name", "resource_version", "resource_disclaimer", "data_url", "resource_url"],
       "additionalProperties" : false  
     }
   }
