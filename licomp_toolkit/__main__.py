@@ -4,16 +4,22 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import json
+from json.decoder import JSONDecodeError
 import logging
 import sys
 
 from licomp.interface import LicompException
 
+from licomp_toolkit.exception import LicompToolkitException
+from licomp_toolkit.return_codes import LicompToolkitReturnCodes
 from licomp_toolkit.toolkit import LicompToolkit
 from licomp_toolkit.toolkit import ExpressionExpressionChecker
 from licomp_toolkit.format import LicompToolkitFormatter
 from licomp_toolkit.config import cli_name
 from licomp_toolkit.config import description
+from licomp_toolkit.config import module_name
+from licomp_toolkit.config import licomp_toolkit_file_version
 from licomp_toolkit.config import epilog
 from licomp_toolkit.schema_checker import LicompToolkitSchemaChecker
 from licomp_toolkit.suggester import OutboundSuggester
@@ -44,18 +50,35 @@ class LicompToolkitParser(LicompParser):
         LicompToolkitSchemaChecker().validate_file(args.file_name, deep=True)
         return None, ReturnCodes.LICOMP_OK.value, None
 
+    def _read_report_file(self, report_file):
+        try:
+            with open(report_file) as fp:
+                report = json.load(fp)
+                meta = report['meta']
+                meta_OK = meta['tool'] == module_name
+                meta_OK = meta['file_version'] == licomp_toolkit_file_version
+                file_OK = meta['file'] == 'verification'
+                if not (meta_OK and file_OK):
+                    err_msg = f'File "{report_file}" not in Licomp Toolkit\'s license policy format.'
+                    err_code = LicompToolkitReturnCodes.LICOMP_TOOLKIT_INVALID_FILE.value
+                    return None, err_code, err_msg
+                return report, ReturnCodes.LICOMP_OK.value, None
+        except (FileNotFoundError, JSONDecodeError) as e:
+            err_msg = f'File "{args.report_file}" not found or not in JSON format'
+            err_code = LicompToolkitReturnCodes.LICOMP_TOOLKIT_INVALID_FILE.value
+            return None, err_code, err_msg
+        except (KeyError) as e:
+            err_msg = f'File "{report_file}" not in Licomp Toolkit\'s license policy format.'
+            err_code = LicompToolkitReturnCodes.LICOMP_TOOLKIT_INVALID_FILE.value
+            return None, err_code, err_msg
+    
     def apply_license_policy(self, args):
-        expr_checker = ExpressionExpressionChecker()
-        compatibilities = expr_checker.check_compatibility("MIT",
-                                                           "GPL-2.0-only OR (ISC AND 0BSD)",
-                                                           'library',
-                                                           'binary-distribution')
-#        lph = LicensePolicyHandler('tests/policy/license-policy.json')
-        lph = LicensePolicyHandler(resources=['licomp_reclicense'],
-                                   usecase='library',
-                                   provisioning='binary-distribution')
-        report = lph.apply_policy(compatibilities)
-        ret_code = compatibility_status_to_returncode(compatibilities['compatibility'])
+        report, err_code, err_msg = self._read_report_file(args.report_file)
+        if err_code != ReturnCodes.LICOMP_OK.value:
+            return None, err_code, err_msg
+        lph = LicensePolicyHandler(policy_file=args.license_policy_file)
+        policy_report = lph.apply_policy(report, ignore_missing=True)
+        ret_code = compatibility_status_to_returncode(report['compatibility'])
         formatter = LicompToolkitFormatter.formatter(self.args.output_format)
         formatted_report = formatter.format_policy_report(report)
         return formatted_report, ret_code, False
@@ -80,7 +103,20 @@ class LicompToolkitParser(LicompParser):
                                                                detailed_report=detailed_report)
 
             ret_code = compatibility_status_to_returncode(compatibilities['compatibility'])
-            return formatter.format_compatibilities(compatibilities), ret_code, False
+            if args.apply_license_policy:
+                if args.license_policy_file:
+                    lph = LicensePolicyHandler(policy_file=args.license_policy_file,
+                                               resources=args.resources,
+                                               usecase=args.usecase,
+                                               provisioning=args.provisioning)
+                else:
+                    lph = LicensePolicyHandler(resources=args.resources,
+                                               usecase=args.usecase,
+                                               provisioning=args.provisioning)
+                policy_report = lph.apply_policy(compatibilities)
+                return formatter.format_policy_report(policy_report), ret_code, False
+            else:
+                return formatter.format_compatibilities(compatibilities), ret_code, False
         except LicompException as e:
             return e, e.return_code.value, True
         except FlameException as e:
@@ -171,7 +207,7 @@ class LicompToolkitParser(LicompParser):
 
 
 def _working_return_code(return_code):
-    return return_code >= 0 and return_code < ReturnCodes.LICOMP_LAST_SUCCESSFUL_CODE.value
+    return return_code >= 0 and return_code < LicompToolkitReturnCodes.LICOMP_TOOLKIT_LAST_ERROR_CODE.value
 
 def main():
     logging.debug("Licomp Toolkit")
@@ -189,13 +225,18 @@ def main():
                         type=str,
                         action='append',
                         help='use specified licomp resource. For a list use the commands \'supported-resources\'. Use \'all\' to use all',
-                        default=[])
+                        default=['licomp_reclicense', 'licomp_osadl'])
 
     parser.add_argument('-nv', '--no-verbose',
                         action='store_true',
                         help='keep compatibility report as short as possible',
                         default=[])
 
+    parser_v = subparsers.choices['verify']
+    parser_v.add_argument("--apply-license-policy", action='store_true', help='Apply license policy', default=False)
+    parser_v.add_argument("--license-policy-file", type=str, help='License policy file. Defaults to use default license policy.', default=None)
+    
+    
     # Commands
     parser_si = subparsers.add_parser('simplify', help='Normalize and simplify a license expression')
     parser_si.set_defaults(which="simplify", func=lct_parser.simplify)
@@ -246,6 +287,8 @@ def main():
     # Command: apply policy
     parser_sr = subparsers.add_parser('apply-license-policy', help='')
     parser_sr.set_defaults(which="apply_license_policy", func=lct_parser.apply_license_policy)
+    parser_sr.add_argument('--license-policy-file', '-lpf', type=str, help='License policy file', default=None)
+    parser_sr.add_argument("report_file", type=str)
 
     res, code, err, func = lct_parser.run_noexit()
     if _working_return_code(code):
