@@ -75,6 +75,9 @@ class LicensePolicy:
         """
         lic1_list, lic1_index = self.list_presence(lic1, ignore_missing)
         lic2_list, lic2_index = self.list_presence(lic2, ignore_missing)
+        logging.debug(f'compare_preferences({lic1}, {lic2}, {ignore_missing})')
+        logging.debug(f'compare_preferences:   "{lic1_list}", "{lic1_index}" "{lic2_list}", "{lic2_index}"')
+
         if (not lic1_list) and (not lic2_list):
             if ignore_missing:
                 logging.debug(f'compare_preferences({lic1}, {lic2}, {ignore_missing}): ignore since both None')
@@ -172,12 +175,16 @@ class DefaultLicensePolicy(LicensePolicy):
 
 class LicensePolicyHandler:
 
-    def __init__(self, policy_file=None, resources=None, usecase=None, provisioning=None):
+    def __init__(self, policy_file=None):
         logging.debug("LicensePolicyHandler()")
         if policy_file:
             self.policy = LicensePolicy(policy_file)
+            self.policy_type = 'policy_file'
+            self.policy_file = policy_file
         else:
-            self.policy = DefaultLicensePolicy(resources, usecase, provisioning)
+            self.policy = None
+            self.policy_type = None
+            self.policy_file = None
 
     def __is_license_expression(self, lic):
         CONTAINS_AND = 'AND' in lic
@@ -229,11 +236,12 @@ class LicensePolicyHandler:
             'least_preferred_license': least_license,
         }
 
-    def __apply_to_compat_object(self, compat_object, indent=0):
+    def __apply_to_compat_object(self, compat_object, ignore_missing=False, indent=0):
         if 'outbound-expression' in compat_object['compatibility_check']:
             operator = compat_object['operator']
             for operand in compat_object['operands']:
                 self.__apply_to_compat_object(operand['compatibility_object'], indent+4)
+            compat_object['policy_check'] = 'apa'
         elif 'outbound-license' in compat_object['compatibility_check']:
             if 'inbound-expression' in compat_object['compatibility_check']:
                 inner_compat_object = compat_object
@@ -265,7 +273,7 @@ class LicensePolicyHandler:
                 pref = self.policy.most_preferred(compat_object['outbound_license'], compat_object['inbound_license'], ignore_missing=True)
 
                 lic = compat_object["inbound_license"]
-                list_nr, index = self.policy.list_presence(lic)
+                list_nr, index = self.policy.list_presence(lic, ignore_missing=ignore_missing)
                 list_name = self.policy.list_nr_to_name(list_nr)
                 compat_object['policy_check'] = {
                     'check_type': 'inbound',
@@ -281,8 +289,21 @@ class LicensePolicyHandler:
             raise Exception("We should not be here")
         return None
 
-    def apply_policy(self, compat_report):
+    def apply_policy(self, compat_report, ignore_missing=False):
+        if not self.policy:
+            logging.debug(f'apply_policy, no policy. Creating default one')
+            resources = compat_report['resources']
+            usecase = compat_report['usecase']
+            provisioning = compat_report['provisioning']
+            self.policy = DefaultLicensePolicy(resources, usecase, provisioning)
+            self.policy_type = 'default'
+            self.policy_file = None
+        
         top_object = compat_report['compatibility_report']
         logging.debug("apply_policy")
-        self.__apply_to_compat_object(top_object)
+        self.__apply_to_compat_object(top_object,
+                                      ignore_missing=ignore_missing)
+        meta = compat_report['meta']
+        meta['policy_type'] = self.policy_type
+        meta['policy_file'] = self.policy_file
         return compat_report
