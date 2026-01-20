@@ -115,14 +115,22 @@ class LicensePolicy:
             return 0
         return 1
     
-    def preferred_score_inbounds(self, lic1, lic2):
-        logging.debug(f'preferred_score_inbounds({lic1}, {lic2})')
-        pref = self.compare_preferences(lic1['inbound_license'], lic2['inbound_license'])
+    def preferred_score_licenses(self, lic1, lic2, key):
+        logging.debug(f'preferred_score_licenses({lic1}, {lic2}, {key})')
+        pref = self.compare_preferences(lic1[key], lic2[key])
         if pref < 0:
             return -1
         if lic1 == lic2:
             return 0
         return 1
+
+    def preferred_score_inbounds(self, lic1, lic2):
+        logging.debug(f'preferred_score_inbounds({lic1}, {lic2})')
+        return self.preferred_score_licenses(lic1, lic2, 'inbound_license')
+    
+    def preferred_score_outbounds(self, lic1, lic2):
+        logging.debug(f'preferred_score_inbounds({lic1}, {lic2})')
+        return self.preferred_score_licenses(lic1, lic2, 'inbound_license')
     
     def least_preferred(self, lic1, lic2, ignore_missing=False):
         most_preferred = self.most_preferred(lic1, lic2, ignore_missing)
@@ -206,47 +214,67 @@ class LicensePolicyHandler:
 
         return ret
             
-    def scored_inbounds(self, inbounds, operator):
+    def scored_general(self, licenses, operator, key):
         if operator == "OR":
-            logging.debug(f'preferred_inbounds({inbounds}, {operator})')
-            filtered_inbound_licenses = [x for x in inbounds if self.usable_license(x)]
-            sorted_inbounds = sorted(filtered_inbound_licenses, key=cmp_to_key(self.policy.preferred_score_inbounds))
-            logging.debug(f'sorted_inbounds: {[x["inbound_license"] for x in sorted_inbounds]})')
-            return sorted_inbounds
+            logging.debug(f'preferred_licenses({licenses}, {operator})')
+            filtered_licenses = [x for x in licenses if self.usable_license(x)]
+            if key == 'inbound_license':
+                sorted_licenses = sorted(filtered_licenses, key=cmp_to_key(self.policy.preferred_score_inbounds))
+            elif key == 'outbound_license':
+                sorted_licenses = sorted(filtered_licenses, key=cmp_to_key(self.policy.preferred_score_outbounds))
+            logging.debug(f'sorted_licenses: {[x["inbound_license"] for x in sorted_licenses]})')
+            return sorted_licenses
         elif operator == "AND":
-            sorted_inbounds = sorted(inbounds, key=cmp_to_key(self.policy.preferred_score_inbounds))
-            return sorted_inbounds
+            if key == 'inbound_license':
+                sorted_licenses = sorted(licenses, key=cmp_to_key(self.policy.preferred_score_inbounds))
+            elif key == 'outbound_license':
+                sorted_licenses = sorted(licenses, key=cmp_to_key(self.policy.preferred_score_outbounds))
+            return sorted_licenses
         else:
             raise Exception("TODO fix this")
         
-    def OBSOLETE__summarize_inbounds(self, inbounds, operator):
-        inbound_licenses = [x['inbound_license'] for x in inbounds]
-        most_license = inbound_licenses[0]
-        least_license = inbound_licenses[0]
-        if operator == "OR":
-            for inbound_license in inbound_licenses:
-                most_license = self.policy.most_preferred(most_license, inbound_license, ignore_missing=True)
-                least_license = self.policy.least_preferred(least_license, inbound_license, ignore_missing=True)
-        elif operator == "AND":
-            for inbound_license in inbound_licenses:
-                most_license = self.policy.most_preferred(most_license, inbound_license, ignore_missing=True)
-                least_license = most_license
-        return {
-            'most_preferred_license': most_license,
-            'least_preferred_license': least_license,
-        }
-
+    def scored_inbounds(self, inbounds, operator):
+        return self.scored_general(inbounds, operator, 'inbound_license')
+        
+    def scored_outbounds(self, outbounds, operator):
+        return self.scored_general(outbounds, operator, 'outbound_license')
+        
     def __apply_to_compat_object(self, compat_object, ignore_missing=False, indent=0):
         if 'outbound-expression' in compat_object['compatibility_check']:
             operator = compat_object['operator']
+            outbounds = []
             for operand in compat_object['operands']:
                 self.__apply_to_compat_object(operand['compatibility_object'], indent+4)
-            compat_object['policy_check'] = 'apa'
+                outbounds.append(operand['compatibility_object']['policy_check'])
+                
+            scored_outbounds = self.scored_outbounds(outbounds, operator)
+            outbound_list = []
+            outbound_list_index = -1
+            if len(scored_outbounds) > 0:
+                outbound_list = scored_outbounds[0]['outbound_list']
+                outbound_list_index = scored_outbounds[0]['outbound_list_index']
+            compat_object['policy_check'] = {
+                'outbound_license': compat_object['outbound_license'],
+                'outbound_license_type': 'license-expression',
+                'outbound_licenses': scored_outbounds,
+                'outbound_list': outbound_list,
+                'outbound_list_index': outbound_list_index,
+            }
         elif 'outbound-license' in compat_object['compatibility_check']:
+            # Get outbound license (not expression) data
+            out_lic = compat_object["outbound_license"]
+            out_list_nr, out_index = self.policy.list_presence(out_lic, ignore_missing=ignore_missing)
+            out_list_name = self.policy.list_nr_to_name(out_list_nr)
+            compat_object['policy_check'] = {
+                'outbound_license': compat_object['outbound_license'],
+                'outbound_license_type': 'license',
+                'outbound_list': out_list_name,
+                'outbound_list_index': out_index,
+            }
+
             if 'inbound-expression' in compat_object['compatibility_check']:
                 inner_compat_object = compat_object
                 operator = inner_compat_object['operator']
-                # BASED ON OPERATOR ... sum up operands
                 inbounds = []
                 for operand in inner_compat_object['operands']:
                     self.__apply_to_compat_object(operand['compatibility_object'], indent+4)
@@ -255,7 +283,7 @@ class LicensePolicyHandler:
                 inbound_list = []
                 inbound_list_index = -1
                 if len(scored_inbounds) > 0:
-                    inbound_list = scored_inbounds[0]['inbound_list']              
+                    inbound_list = scored_inbounds[0]['inbound_list']
                     inbound_list_index = scored_inbounds[0]['inbound_list_index']
 
                 inner_compat_object['policy_check'] = {
@@ -275,7 +303,7 @@ class LicensePolicyHandler:
                 lic = compat_object["inbound_license"]
                 list_nr, index = self.policy.list_presence(lic, ignore_missing=ignore_missing)
                 list_name = self.policy.list_nr_to_name(list_nr)
-                compat_object['policy_check'] = {
+                compat_object['policy_check'].update({
                     'check_type': 'inbound',
                     'inbound_license': compat_object['inbound_license'],
                     'outbound_license': compat_object['outbound_license'],
@@ -284,7 +312,8 @@ class LicensePolicyHandler:
                     'compatibility': compat_object['compatibility'],
                     'inbound_list': list_name,
                     'inbound_list_index': index,
-                }
+                })
+            
         else:
             raise Exception("We should not be here")
         return None
