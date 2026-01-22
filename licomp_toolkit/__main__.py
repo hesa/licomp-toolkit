@@ -105,14 +105,9 @@ class LicompToolkitParser(LicompParser):
             ret_code = compatibility_status_to_returncode(compatibilities['compatibility'])
             if args.apply_license_policy:
                 if args.license_policy_file:
-                    lph = LicensePolicyHandler(policy_file=args.license_policy_file,
-                                               resources=args.resources,
-                                               usecase=args.usecase,
-                                               provisioning=args.provisioning)
+                    lph = LicensePolicyHandler(policy_file=args.license_policy_file)
                 else:
-                    lph = LicensePolicyHandler(resources=args.resources,
-                                               usecase=args.usecase,
-                                               provisioning=args.provisioning)
+                    lph = LicensePolicyHandler()
                 policy_report = lph.apply_policy(compatibilities)
                 return formatter.format_policy_report(policy_report), ret_code, False
             else:
