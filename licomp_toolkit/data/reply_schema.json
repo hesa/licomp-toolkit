@@ -4,6 +4,23 @@
   "title" : "Licomp Toolkit Reply",
   "type" : "object",
   "properties" : {
+    "meta": {
+      "type" : "object",
+      "properties" : {
+        "status" : {
+          "type": "string",
+          "description" : ""
+        },
+        "tool" : {
+          "type": "string",
+          "description" : ""
+        },
+        "file_version" : {
+          "type": "string",
+          "description" : ""
+        }
+      }
+    },
     "compatibility_report": {
       "type" : "object",
       "$ref": "#/$defs/compatibility_object"

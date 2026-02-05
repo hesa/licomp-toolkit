@@ -23,7 +23,9 @@ from licomp_doubleopen.doubleopen import LicompDoubleOpen
 
 from licomp_toolkit.config import disclaimer
 from licomp_toolkit.config import licomp_toolkit_version
+from licomp_toolkit.config import licomp_toolkit_file_version
 from licomp_toolkit.config import cli_name
+from licomp_toolkit.config import module_name
 
 from licomp_toolkit.expr_parser import LicenseExpressionParser
 from licomp_toolkit.expr_parser import COMPATIBILITY_TYPE
@@ -92,6 +94,12 @@ class LicompToolkit(Licomp):
             _resources.append(self.licomp_resource_long(resource))
         return _resources
 
+    def licomp_resources_short(self):
+        _resources = []
+        for resource in self.licomp_resources().values():
+            _resources.append(f'{resource.name()}:{resource.version()}')
+        return _resources
+
     def _resource_type(self, resource):
         if self._resource_is_standard(resource):
             return 'standard'
@@ -114,7 +122,7 @@ class LicompToolkit(Licomp):
             logging.debug(f': {compat["resource_name"]}')
             self.__add_to_list(statuses, compat['status'], compat)
             self.__add_to_list(compats, compat['compatibility_status'], compat)
-        compatibilities["summary"]["resources"] = self.licomp_resources_long()
+        compatibilities["summary"]["resources"] = self.licomp_resources_short()
         compatibilities["summary"]["outbound"] = outbound
         compatibilities["summary"]["inbound"] = inbound
         compatibilities["summary"]["usecase"] = UseCase.usecase_to_string(usecase)
@@ -245,8 +253,9 @@ class LicenseExpressionChecker():
                             detailed_report=True):
 
         compat_object = {
-            COMPATIBILITY_TYPE: parsed_expression[COMPATIBILITY_TYPE],
-            'compatibility_check': 'outbound-expression -> inbound-license',
+#            INBOUND_COMPATIBILITY_TYPE: parsed_expression[COMPATIBILITY_TYPE],
+            'compatibility_check': f'outbound-{self.le_parser.parse_license_expression(outbound)["compatibility_type"]} -> inbound-{parsed_expression["compatibility_type"]}',
+            'check_class': __class__.__name__,
         }
 
         if parsed_expression[COMPATIBILITY_TYPE] == 'license':
@@ -265,7 +274,7 @@ class LicenseExpressionChecker():
             compat_object['inbound_license'] = lic
             compat_object['outbound_license'] = outbound
             compat_object['compatibility_object'] = {}
-
+            
         else:
             operator = parsed_expression['operator']
             operands = parsed_expression['operands']
@@ -279,7 +288,7 @@ class LicenseExpressionChecker():
                 operand_compat = self.check_compatibility(outbound, operand, usecase, provisioning, resources, detailed_report=detailed_report)
                 operand_object = {
                     'compatibility_object': operand_compat,
-                    'compatibility': operand_compat['compatibility'],
+                    'compatibility': operand_compat['compatibility']
                 }
                 operands_object.append(operand_object)
 
@@ -344,6 +353,13 @@ class ExpressionExpressionChecker():
     def __parsed_expression_to_name(self, parsed_expression):
         return parsed_expression[parsed_expression[COMPATIBILITY_TYPE]]
 
+    def meta_information(self):
+        return {
+            'tool': module_name,
+            'file': 'verification',
+            'file_version': licomp_toolkit_file_version
+        }
+        
     def check_compatibility(self, outbound, inbound, usecase, provisioning, resources=None, detailed_report=True):
 
         # Check usecase
@@ -396,6 +412,7 @@ class ExpressionExpressionChecker():
                                                           resources,
                                                           detailed_report)
         return {
+            'meta': self.meta_information(),
             'inbound': str(inbound),
             'outbound': str(outbound),
             'usecase': usecase,
@@ -404,7 +421,7 @@ class ExpressionExpressionChecker():
             'compatibility': compatibility_object['compatibility'],
             'compatibility_report': compatibility_object,
             'unavailable_resources': unavailable_resources,
-            'available_resources': available_resources,
+            'available_resources': available_resources
         }
 
     def __check_compatibility(self,
@@ -417,27 +434,46 @@ class ExpressionExpressionChecker():
 
         outbound_type = outbound_parsed[COMPATIBILITY_TYPE]
         compat_object = {
-            COMPATIBILITY_TYPE: outbound_type,
+#            OUTBOUND_COMPATIBILITY_TYPE: outbound_type,
             'inbound_license': self.le_parser.to_string(inbound_parsed),
             'outbound_license': self.le_parser.to_string(outbound_parsed),
+            'check_class': __class__.__name__,
         }
 
         if outbound_type == 'license':
-            compat_object['compatibility_check'] = f'outbound-license -> inbound-{inbound_parsed["compatibility_type"]}'
+            if False:
+                # TODO: REMOVE HERE?
+                compat_object['compatibility_check'] = f'outbound-license -> inbound-{inbound_parsed["compatibility_type"]} HERE?'
+                outbound_parsed_license = outbound_parsed['license']
+                compat_object['HENRIK_TESTS'] = 'MONKEY BALLS'
+
+                # TODO: SHOULD operator/operands be added????  SEEMS LIKE NO
+                #compat_object['operator'] = inbound_parsed['operator']
+                #compat_object['operands'] = inbound_parsed['operands']
+                # Check if:
+                #    outbound license
+                #    is compatible with
+                #    inbound license
+                compat = self.le_checker.check_compatibility(outbound_parsed_license,
+                                                             inbound_parsed,
+                                                             usecase,
+                                                             provisioning,
+                                                             resources,
+                                                             detailed_report)
+                compat_object['compatibility'] = compat['compatibility']
+                compat_object['compatibility_object'] = compat
+                compat_object['compatibility_details'] = None
+
+            # TODO: CHECK IF ABOVE CAN BE REMOVED
             outbound_parsed_license = outbound_parsed['license']
-            # Check if:
-            #    outbound license
-            #    is compatible with
-            #    inbound license
             compat = self.le_checker.check_compatibility(outbound_parsed_license,
                                                          inbound_parsed,
                                                          usecase,
                                                          provisioning,
                                                          resources,
                                                          detailed_report)
-            compat_object['compatibility'] = compat['compatibility']
-            compat_object['compatibility_object'] = compat
-            compat_object['compatibility_details'] = None
+            compat_object = compat
+            
 
         elif outbound_type == 'expression':
             compat_object['compatibility_details'] = None
