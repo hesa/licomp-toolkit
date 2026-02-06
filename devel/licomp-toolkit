@@ -14,6 +14,13 @@ fi
 if [ "$1" = "" ]
 then
     ARGS="verify -il MIT -ol \"MIT OR X11\""
+else
+    ARGS=""
+    for arg in "$@"
+    do
+        ARGS="$ARGS \"$arg\""
+    done
 fi     
 
-echo PYTHONPATH=${EXTRA_PYTHONPATH}:${PYTHONPATH} ${SCRIPT_DIR}/licomp_toolkit/__main__.py $* $ARGS | bash
+
+echo PYTHONPATH=${EXTRA_PYTHONPATH}:${PYTHONPATH} ${SCRIPT_DIR}/licomp_toolkit/__main__.py $ARGS | bash
