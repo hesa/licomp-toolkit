@@ -543,12 +543,7 @@ class LicensePolicyHandler:
                 'preferred_inbound_license': preferred_inbound_license,
                 'preferred_inbound_license_list': preferred_inbound_license_list,
                 'preferred_inbound_license_index': preferred_inbound_license_index,
-                'HENRIK_OP': operator,
             }
-            if operator == 'AND':
-                compat_object['policy_check']['HENRIK_DIX'] = 'AND'
-            else:
-                compat_object['policy_check']['HENRIK_DIX'] = 'NOT NOT AND : ' + operator
 
         elif 'outbound-license' in compat_object['compatibility_check']:
 
