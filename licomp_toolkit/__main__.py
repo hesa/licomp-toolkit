@@ -80,7 +80,7 @@ class LicompToolkitParser(LicompParser):
         policy_report = lph.apply_policy(report, ignore_missing=True)
         ret_code = compatibility_status_to_returncode(report['compatibility'])
         formatter = LicompToolkitFormatter.formatter(self.args.output_format)
-        formatted_report = formatter.format_policy_report(report)
+        formatted_report = formatter.format_policy_report(report, verbose=args.verbose)
         return formatted_report, ret_code, False
     
     def verify(self, args):
@@ -109,9 +109,9 @@ class LicompToolkitParser(LicompParser):
                 else:
                     lph = LicensePolicyHandler()
                 policy_report = lph.apply_policy(compatibilities)
-                return formatter.format_policy_report(policy_report), ret_code, False
+                return formatter.format_policy_report(policy_report, verbose=args.verbose), ret_code, False
             else:
-                return formatter.format_compatibilities(compatibilities), ret_code, False
+                return formatter.format_compatibilities(compatibilities, verbose=args.verbose), ret_code, False
         except LicompException as e:
             return e, e.return_code.value, True
         except FlameException as e:
