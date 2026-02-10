@@ -18,7 +18,7 @@ class LicompToolkitFormatter():
         if fmt.lower() == 'dot':
             return DotLicompToolkitFormatter()
 
-    def format_compatibilities(self, compat):
+    def format_compatibilities(self, compat, verbose=False):
         raise Exception(f'{self.__class__.__name__} cannot format compatibilities.')
 
     def _pre_format_display_compatibilities(self, compats):
@@ -55,7 +55,7 @@ class LicompToolkitFormatter():
 
 class JsonLicompToolkitFormatter(LicompToolkitFormatter):
 
-    def format_compatibilities(self, compat):
+    def format_compatibilities(self, compat, verbose=False):
         return json.dumps(compat, indent=4)
 
     def format_licomp_resources(self, licomp_resources):
@@ -73,12 +73,15 @@ class JsonLicompToolkitFormatter(LicompToolkitFormatter):
         display_compats = self._pre_format_display_compatibilities(compats)
         return json.dumps(display_compats, indent=4)
 
-    def format_policy_report(self, report):
+    def format_policy_report(self, report, verbose=False):
         return json.dumps(report, indent=4)
         
 class YamlLicompToolkitFormatter(LicompToolkitFormatter):
 
-    def format_compatibilities(self, compat):
+    def format_compatibilities(self, compat, verbose=False):
+        return yaml.safe_dump(compat, indent=4)
+
+    def format_policy_report(self, report, verbose=False):
         return yaml.safe_dump(compat, indent=4)
 
     def format_licomp_resources(self, licomp_resources):
@@ -155,7 +158,7 @@ class TextLicompToolkitFormatter(LicompToolkitFormatter):
         else:
             return f'{PAREN_OPEN}{compat_string}{PAREN_CLOSE}'
 
-    def format_compatibilities_general(self, compat_object, indent='', policy_report=False, preferred_license=False):
+    def format_compatibilities_general(self, compat_object, indent='', policy_report=False, preferred_license=None):
         compatibility_check = compat_object["compatibility_check"]
         output = []
 
@@ -165,15 +168,17 @@ class TextLicompToolkitFormatter(LicompToolkitFormatter):
             summary = details["summary"]
             preferred_info = 'no'
             import sys
-            print ("policy_report and preferred_license:" + str(policy_report) + " " + str(preferred_license))
-#            sys.exit(1)
-            if policy_report and preferred_license:
+            # TODO: 
+            print ("policy_report and preferred_license DIEGO2:" + str(policy_report) + " " + str(preferred_license == compat_object["policy_check"]["inbound"]["preferences"]["license"]))
+            print ("policy_report and preferred_license DIEGO:" + str(compat_object["policy_check"]["inbound"]["preferences"]["license"]) + " <---> " + str(compat_object["inbound_license"]) + "     SAME:" + str(compat_object["policy_check"]["inbound"]["preferences"]["license"]== compat_object["inbound_license"]))
+            #sys.exit(1)
+            if policy_report and preferred_license == compat_object["policy_check"]["inbound"]["preferences"]["license"]:
                 preferred_info = 'yes'
             #output.append(f'{indent}{compat_object["outbound_license"]} -> {compat_object["inbound_license"]} {self._format_compat_pref(compat_object["compatibility"])}')
             output.append(f'{indent}{compat_object["outbound_license"]} -> {compat_object["inbound_license"]}')
             #output.append(f'{indent}  check:                   {compatibility_check}')
             if policy_report:
-                output.append(f'{indent}  preferred:           {preferred_info}')
+                output.append(f'{indent}  preferred:               {preferred_info}')
             output.append(f'{indent}  compatibility:           {compat_object["compatibility"]}')
             output.append(f'{indent}  compatibility details:   ')
             output += self.__compatibility_statuses(summary['compatibility_statuses'], f'{indent}    ')
@@ -181,8 +186,9 @@ class TextLicompToolkitFormatter(LicompToolkitFormatter):
         if compatibility_check == "outbound-license -> inbound-expression":
             operator = compat_object["operator"]
             inner_output = []
-            if policy_report:
-                preferred_license_ = compat_object['policy_check']['inbound']['preferences']['license']
+            preferred_info = 'no'
+            if policy_report and preferred_license == compat_object['policy_check']['inbound']['preferences']['license']:
+                preferred_info = 'yes'
             for operand in compat_object["operands"]:
                 preferred = False
                 if policy_report:
@@ -193,13 +199,12 @@ class TextLicompToolkitFormatter(LicompToolkitFormatter):
                 #inner_output.append(f'{indent}  allowed licenses:        {", ".join([x["inbound_license"] for x in compat_object["policy_check"]["inbound_licenses"]])}')
                 inner_output.append(res)
             if policy_report:
-                preferred_license = compat_object['policy_check']['inbound']['preferences']['license']
                 output.append(f'{indent}{operator} {self._format_compat_pref(compat_object["compatibility"], preferred_license)}')
                 output.append(f'{indent}  check:           {compatibility_check}')
                 output.append(f'{indent}  outbound:        {compat_object["outbound_license"]}')
                 output.append(f'{indent}  inbound:         {compat_object["inbound_license"]}')
                 output.append(f'{indent}  comaptibility:   {compat_object["compatibility"]}')
-                output.append(f'{indent}  preferred:       {preferred_license}')
+                output.append(f'{indent}  preferred:       {preferred_info}')
                 output.append(f'{indent}  details:')
                 output += inner_output
 
@@ -210,15 +215,18 @@ class TextLicompToolkitFormatter(LicompToolkitFormatter):
                 res = self.format_compatibilities_general(operand['compatibility_object'], indent=f'{indent}  ', policy_report=policy_report, preferred_license=preferred_license)
                 output.append(res)
         if compatibility_check == "outbound-expression -> inbound-expression":
-            print("APA")
+            #print("APA")
             operator = compat_object["operator"]
             compat = compat_object["compatibility"]
+            preferred_info = 'no'
+            if policy_report and preferred_license == compat_object['policy_check']['inbound']['preferences']['license']:
+                preferred_info = 'yes'
             output.append(f'{indent}{operator} {self._format_compat_pref(compat)}')
             output.append(f'{indent}  check: {compatibility_check}')
             output.append(f'{indent}  outbound:        {compat_object["outbound_license"]}')
             output.append(f'{indent}  inbound:         {compat_object["inbound_license"]}')
             output.append(f'{indent}  comaptibility:   {compat_object["compatibility"]}')
-            output.append(f'{indent}  preferred:       TODO')
+            output.append(f'{indent}  preferred:       {preferred_info}')
             output.append(f'{indent}  details:')
             for operand in compat_object['operands']:
                 res = self.format_compatibilities_general(operand['compatibility_object'], indent=f'{indent}  ', policy_report=policy_report, preferred_license=preferred_license)
@@ -229,9 +237,9 @@ class TextLicompToolkitFormatter(LicompToolkitFormatter):
     def format_compatibilities_object(self, compat_object):
         return self.format_compatibilities_general(compat_object, indent='')
 
-    def format_policy_report(self, report):
+    def format_policy_report(self, report, verbose=False):
         output = []
-        preferred_inbound = ''
+        preferred_inbound = report['compatibility_report']['policy_check']['inbound']['preferences']['license']
         print("keys: " + str(report["compatibility_report"].keys()))
 
         output.append(f'outbound:          {report["outbound"]}')
@@ -241,16 +249,18 @@ class TextLicompToolkitFormatter(LicompToolkitFormatter):
         output.append(f'usecase:           {report["usecase"]}')
         output.append(f'compatibility:     {report["compatibility"]}')
         output.append(f'preferred inbound: {preferred_inbound}')
+        output.append(f'HESA:              {report["compatibility_report"]["policy_check"]}')
         if report["meta"]["policy_type"] == 'default':
             policy_string = 'default'
         else:
             policy_string = report["meta"]["policy_file"]
         output.append(f'policy:            {policy_string}')
-        output.append('report:')
-        output.append(self.format_compatibilities_general(report["compatibility_report"], indent='  ', policy_report=True, preferred_license=True))
+        if verbose:
+            output.append('report:')
+            output.append(self.format_compatibilities_general(report["compatibility_report"], indent='  ', policy_report=True, preferred_license=preferred_inbound))
         return "\n".join(output)
         
-    def format_compatibilities(self, compat):
+    def format_compatibilities(self, compat, verbose=False):
         output = []
         output.append(f'outbound:      {compat["outbound"]}')
         output.append(f'inbound:       {compat["inbound"]}')
@@ -258,8 +268,9 @@ class TextLicompToolkitFormatter(LicompToolkitFormatter):
         output.append(f'provisioning:  {compat["provisioning"]}')
         output.append(f'usecase:       {compat["usecase"]}')
         output.append(f'compatibility: {compat["compatibility"]}')
-        output.append('report:')
-        output.append(self.format_compatibilities_general(compat["compatibility_report"], '  ', policy_report=False))
+        if verbose:
+            output.append('report:')
+            output.append(self.format_compatibilities_general(compat["compatibility_report"], '  ', policy_report=False))
 
         return "\n".join(output)
 
