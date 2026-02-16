@@ -29,8 +29,8 @@ GPLv2_A_BSD3 = 'GPL-2.0-only AND BSD-3-Clause'
 def _compat_status(report):
     return report['compatibility_report']['compatibility']
 
-def _compat_type(report):
-    return report['compatibility_report']['compatibility_type']
+def _compat_check(report):
+    return report['compatibility_report']['compatibility_check']
 
 #
 # license compat with license
@@ -42,7 +42,8 @@ def test_lic_lic_compat():
                                             usecase=UseCase.usecase_to_string(UseCase.LIBRARY),
                                             provisioning=Provisioning.provisioning_to_string(Provisioning.BIN_DIST))
     assert _compat_status(compat_report) == 'yes'
-    assert _compat_type(compat_report) == 'license'
+    assert 'inbound-license' in _compat_check(compat_report) 
+    assert 'outbound-license' in _compat_check(compat_report) 
     
 # MIT -> GPL-2.0-only -> are NOT compatible
 def test_lic_lic_incompat():
@@ -50,7 +51,8 @@ def test_lic_lic_incompat():
                                             usecase=UseCase.usecase_to_string(UseCase.LIBRARY),
                                             provisioning=Provisioning.provisioning_to_string(Provisioning.BIN_DIST))
     assert _compat_status(compat_report) == 'no'
-    assert _compat_type(compat_report) == 'license'
+    assert 'inbound-license' in _compat_check(compat_report) 
+    assert 'outbound-license' in _compat_check(compat_report) 
     
 #
 # license compat with expression
@@ -62,7 +64,8 @@ def test_lic_expr_compat():
                                             usecase=UseCase.usecase_to_string(UseCase.LIBRARY),
                                             provisioning=Provisioning.provisioning_to_string(Provisioning.BIN_DIST))
     assert _compat_status(compat_report) == 'yes'
-    assert _compat_type(compat_report) == 'license'
+    assert 'inbound-expression' in _compat_check(compat_report) 
+    assert 'outbound-license' in _compat_check(compat_report) 
 
 # GPL-2.0-only -> MIT AND Apache-2.0 are NOT compatible
 def test_lic_expr_incompat():
@@ -70,7 +73,9 @@ def test_lic_expr_incompat():
                                             usecase=UseCase.usecase_to_string(UseCase.LIBRARY),
                                             provisioning=Provisioning.provisioning_to_string(Provisioning.BIN_DIST))
     assert _compat_status(compat_report) == 'no'
-    assert _compat_type(compat_report) == 'license'
+    assert 'inbound-expression' in _compat_check(compat_report) 
+    assert 'inbound-expression' in _compat_check(compat_report) 
+    assert 'outbound-license' in _compat_check(compat_report) 
         
 #
 # expression compat with license
@@ -81,7 +86,8 @@ def test_expr_lic_compat():
                                             usecase=UseCase.usecase_to_string(UseCase.LIBRARY),
                                             provisioning=Provisioning.provisioning_to_string(Provisioning.BIN_DIST))
     assert _compat_status(compat_report) == 'yes'
-    assert _compat_type(compat_report) == 'expression'
+    assert 'inbound-license' in _compat_check(compat_report) 
+    assert 'outbound-expression' in _compat_check(compat_report) 
 
 # GPL-2.0-only AND BSD-3-Clause -> Apache-2.0 are NOT compatible
 def test_expr_lic_incompat():
@@ -89,7 +95,8 @@ def test_expr_lic_incompat():
                                             usecase=UseCase.usecase_to_string(UseCase.LIBRARY),
                                             provisioning=Provisioning.provisioning_to_string(Provisioning.BIN_DIST))
     assert _compat_status(compat_report) == 'no'
-    assert _compat_type(compat_report) == 'expression'
+    assert 'inbound-license' in _compat_check(compat_report) 
+    assert 'outbound-expression' in _compat_check(compat_report) 
     
 #
 # expression compat with expression
@@ -101,7 +108,8 @@ def test_expr_expr_compat():
                                             usecase=UseCase.usecase_to_string(UseCase.LIBRARY),
                                             provisioning=Provisioning.provisioning_to_string(Provisioning.BIN_DIST))
     assert _compat_status(compat_report) == 'yes'
-    assert _compat_type(compat_report) == 'expression'
+    assert 'inbound-expression' in _compat_check(compat_report) 
+    assert 'outbound-expression' in _compat_check(compat_report) 
 
 # GPL-2.0-only AND BSD-3-Clause -> Apache-2.0 AND ISC are NOT compatible
 def test_expr_expr_incompat():
@@ -109,7 +117,8 @@ def test_expr_expr_incompat():
                                             usecase=UseCase.usecase_to_string(UseCase.LIBRARY),
                                             provisioning=Provisioning.provisioning_to_string(Provisioning.BIN_DIST))
     assert _compat_status(compat_report) == 'no'
-    assert _compat_type(compat_report) == 'expression'
+    assert 'inbound-expression' in _compat_check(compat_report) 
+    assert 'outbound-expression' in _compat_check(compat_report) 
 
     
     
@@ -125,7 +134,8 @@ def test_expr_expr_large_compat():
                                             usecase=UseCase.usecase_to_string(UseCase.LIBRARY),
                                             provisioning=Provisioning.provisioning_to_string(Provisioning.BIN_DIST))
     assert _compat_status(compat_report) == 'yes'
-    assert _compat_type(compat_report) == 'expression'
+    assert 'inbound-expression' in _compat_check(compat_report) 
+    assert 'outbound-expression' in _compat_check(compat_report) 
 
     
 def test_expr_expr_large_incompat():
@@ -135,7 +145,8 @@ def test_expr_expr_large_incompat():
                                             usecase=UseCase.usecase_to_string(UseCase.LIBRARY),
                                             provisioning=Provisioning.provisioning_to_string(Provisioning.BIN_DIST))
     assert _compat_status(compat_report) == 'no'
-    assert _compat_type(compat_report) == 'expression'
+    assert 'inbound-expression' in _compat_check(compat_report) 
+    assert 'outbound-expression' in _compat_check(compat_report) 
 
     
     
@@ -149,7 +160,8 @@ def test_expr_expr_with_1():
                                             provisioning=Provisioning.provisioning_to_string(Provisioning.BIN_DIST))
 
     assert _compat_status(compat_report) == 'no'
-    assert _compat_type(compat_report) == 'expression'
+    assert 'inbound-expression' in _compat_check(compat_report) 
+    assert 'outbound-expression' in _compat_check(compat_report) 
 
     
 def test_expr_expr_with_2():
@@ -159,7 +171,8 @@ def test_expr_expr_with_2():
                                             usecase=UseCase.usecase_to_string(UseCase.LIBRARY),
                                             provisioning=Provisioning.provisioning_to_string(Provisioning.BIN_DIST))
     assert _compat_status(compat_report) == 'no'
-    assert _compat_type(compat_report) == 'expression'
+    assert 'inbound-expression' in _compat_check(compat_report) 
+    assert 'outbound-expression' in _compat_check(compat_report) 
 
     
     

@@ -12,8 +12,6 @@ AND = "AND"
 OR = "OR"
 
 COMPATIBILITY_TYPE = 'compatibility_type'
-COMPATIBILITY_OUTBOUND_LICENSE = 'outbound_license'
-COMPATIBILITY_INBOUND_LICENSE = 'inbound_license'
 
 class LicenseExpressionParser():
 
@@ -127,7 +125,7 @@ class LicenseExpressionParser():
         elif self.__is_close(expression):
             return ""
 
-        raise Exception("Bottom reached")
+        raise Exception("Bottom reached in __parse_expression (expr_parser.py)")
 
     def to_string(self, parsed_license):
         license_type = parsed_license['compatibility_type']

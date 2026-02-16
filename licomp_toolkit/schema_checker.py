@@ -43,7 +43,7 @@ class LicompToolkitSchemaChecker:
             if compat_check == 'outbound-expression -> inbound-license' or compat_check == 'outbound-expression -> inbound-expression':
                 compat_object = compat
             elif compat['compatibility_check'] == 'outbound-license -> inbound-expression':
-                compat_object = compat['compatibility_object']
+                compat_object = compat
             else:
                 raise LicompException("Validation failed. Invalid state: " + compat_check)
 

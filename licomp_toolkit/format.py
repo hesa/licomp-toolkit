@@ -18,7 +18,7 @@ class LicompToolkitFormatter():
         if fmt.lower() == 'dot':
             return DotLicompToolkitFormatter()
 
-    def format_compatibilities(self, compat):
+    def format_compatibilities(self, compat, verbose=False):
         raise Exception(f'{self.__class__.__name__} cannot format compatibilities.')
 
     def _pre_format_display_compatibilities(self, compats):
@@ -55,7 +55,7 @@ class LicompToolkitFormatter():
 
 class JsonLicompToolkitFormatter(LicompToolkitFormatter):
 
-    def format_compatibilities(self, compat):
+    def format_compatibilities(self, compat, verbose=False):
         return json.dumps(compat, indent=4)
 
     def format_licomp_resources(self, licomp_resources):
@@ -67,16 +67,22 @@ class JsonLicompToolkitFormatter(LicompToolkitFormatter):
     def format_licomp_versions(self, licomp_versions):
         return json.dumps(licomp_versions, indent=4)
 
-    def format_display_compatibilities(self, compats, settings={}):
+    def format_display_compatibilities(self, compats, settings={}): # noqa: B006
         # settings
         #  discard_unsupported: True - will remove unsupported licenses from the output
         display_compats = self._pre_format_display_compatibilities(compats)
         return json.dumps(display_compats, indent=4)
 
+    def format_policy_report(self, report, verbose=False):
+        return json.dumps(report, indent=4)
+
 class YamlLicompToolkitFormatter(LicompToolkitFormatter):
 
-    def format_compatibilities(self, compat):
+    def format_compatibilities(self, compat, verbose=False):
         return yaml.safe_dump(compat, indent=4)
+
+    def format_policy_report(self, report, verbose=False):
+        return yaml.safe_dump(report, indent=4)
 
     def format_licomp_resources(self, licomp_resources):
         return yaml.safe_dump(licomp_resources, indent=4)
@@ -87,7 +93,7 @@ class YamlLicompToolkitFormatter(LicompToolkitFormatter):
     def format_licomp_versions(self, licomp_versions):
         return yaml.safe_dump(licomp_versions, indent=4)
 
-    def format_display_compatibilities(self, compats, settings={}):
+    def format_display_compatibilities(self, compats, settings={}): # noqa: B006
         display_compats = self._pre_format_display_compatibilities(compats)
         return yaml.safe_dump(display_compats, indent=4)
 
@@ -139,51 +145,109 @@ class TextLicompToolkitFormatter(LicompToolkitFormatter):
 
         return output
 
-    def _format_compat(self, compat):
-        PAREN_OPEN = '('
-        PAREN_START = ')'
-        return f'{PAREN_OPEN}{compat}{PAREN_START}'
+    def _format_compat_value(self, compat):
+        return {'yes': 'compatible'}.get(compat, 'incompatible')
 
-    def format_compatibilities_object(self, compat_object, indent=''):
+    def _format_compat_pref(self, compat, pref_lic=None):
+        PAREN_OPEN = '('
+        PAREN_CLOSE = ')'
+        compat_string = self._format_compat_value(compat)
+        if pref_lic:
+            return f'{PAREN_OPEN}{compat_string}, {pref_lic}{PAREN_CLOSE}'
+        else:
+            return f'{PAREN_OPEN}{compat_string}{PAREN_CLOSE}'
+
+    def format_compatibilities_general(self, compat_object, indent='', policy_report=False, preferred_license=None):
         compatibility_check = compat_object["compatibility_check"]
         output = []
 
         if compatibility_check == "outbound-license -> inbound-license":
-            if not compat_object["compatibility_object"]:
-                pass
-            else:
-                compat_object = compat_object["compatibility_object"]
+            compat_object = compat_object
             details = compat_object["compatibility_details"]
             summary = details["summary"]
+            preferred_info = 'no'
+            if policy_report and preferred_license == compat_object["policy_check"]["inbound"]["preferences"]["license"]:
+                preferred_info = 'yes'
+            output.append(f'{indent}{compat_object["outbound_license"]} -> {compat_object["inbound_license"]}')
+            if policy_report:
+                output.append(f'{indent}  preferred:               {preferred_info}')
+            output.append(f'{indent}  compatibility:           {compat_object["compatibility"]}')
+            output.append(f'{indent}  compatibility details:   ')
+            output += self.__compatibility_statuses(summary['compatibility_statuses'], f'{indent}    ')
 
-            output.append(f'{indent}{compat_object["outbound_license"]} -> {compat_object["inbound_license"]} {self._format_compat(compat_object["compatibility"])}')
-            output.append(f'{indent}  compatibility: {compat_object["compatibility"]}')
-            output.append(f'{indent}  compatibility details:')
-            output += self.__compatibility_statuses(summary['compatibility_statuses'], f'{indent}  ')
         if compatibility_check == "outbound-license -> inbound-expression":
-            operator = compat_object["compatibility_object"]["operator"]
-            output.append(f'{indent}{operator} {self._format_compat(compat_object["compatibility"])}')
-            for operand in compat_object["compatibility_object"]["operands"]:
-                res = self.format_compatibilities_object(operand['compatibility_object'], indent=f'{indent}  ')
-                output.append(res)
+            operator = compat_object["operator"]
+            inner_output = []
+            preferred_info = 'no'
+            if policy_report and preferred_license == compat_object['policy_check']['inbound']['preferences']['license']:
+                preferred_info = 'yes'
+            for operand in compat_object["operands"]:
+                res = self.format_compatibilities_general(operand['compatibility_object'], indent=f'{indent}    ', policy_report=policy_report, preferred_license=preferred_license)
+                inner_output.append(res)
+            if policy_report:
+                output.append(f'{indent}{operator} {self._format_compat_pref(compat_object["compatibility"], preferred_license)}')
+                output.append(f'{indent}  check:           {compatibility_check}')
+                output.append(f'{indent}  outbound:        {compat_object["outbound_license"]}')
+                output.append(f'{indent}  inbound:         {compat_object["inbound_license"]}')
+                output.append(f'{indent}  comaptibility:   {compat_object["compatibility"]}')
+                output.append(f'{indent}  preferred:       {preferred_info}')
+                output.append(f'{indent}  details:')
+                output += inner_output
 
         if compatibility_check == "outbound-expression -> inbound-license":
             operator = compat_object["operator"]
-            output.append(f'{indent}{operator} {self._format_compat(compat_object["compatibility"])}')
+            output.append(f'{indent}{operator} {self._format_compat_pref(compat_object["compatibility"])}')
             for operand in compat_object["operands"]:
-                res = self.format_compatibilities_object(operand['compatibility_object'], indent=f'{indent}  ')
+                res = self.format_compatibilities_general(operand['compatibility_object'], indent=f'{indent}  ', policy_report=policy_report, preferred_license=preferred_license)
                 output.append(res)
         if compatibility_check == "outbound-expression -> inbound-expression":
             operator = compat_object["operator"]
             compat = compat_object["compatibility"]
-            output.append(f'{indent}{operator} {self._format_compat(compat)}')
+            preferred_info = 'no'
+            if policy_report and preferred_license == compat_object['policy_check']['inbound']['preferences']['license']:
+                preferred_info = 'yes'
+            output.append(f'{indent}{operator} {self._format_compat_pref(compat)}')
+            output.append(f'{indent}  check: {compatibility_check}')
+            output.append(f'{indent}  outbound:        {compat_object["outbound_license"]}')
+            output.append(f'{indent}  inbound:         {compat_object["inbound_license"]}')
+            output.append(f'{indent}  comaptibility:   {compat_object["compatibility"]}')
+            output.append(f'{indent}  preferred:       {preferred_info}')
+            output.append(f'{indent}  details:')
             for operand in compat_object['operands']:
-                res = self.format_compatibilities_object(operand['compatibility_object'], indent=f'{indent}  ')
+                res = self.format_compatibilities_general(operand['compatibility_object'], indent=f'{indent}  ', policy_report=policy_report, preferred_license=preferred_license)
                 output.append(f'{res}')
 
         return "\n".join(output)
 
-    def format_compatibilities(self, compat):
+    def format_compatibilities_object(self, compat_object):
+        return self.format_compatibilities_general(compat_object, indent='')
+
+    def format_policy_report(self, report, verbose=False):
+        output = []
+        preferred_inbound = report['compatibility_report']['policy_check']['inbound']['preferences']['license']
+        preferred_outbound = report['compatibility_report']['policy_check']['outbound']['preferences']['license']
+
+        policy_info = report['meta']['policy_type']
+        if policy_info == 'policy_file':
+            policy_info = f'{policy_info} {report["meta"]["policy_file"]}'
+
+        output.append(f'outbound:           {report["outbound"]}')
+        output.append(f'inbound:            {report["inbound"]}')
+        res = ', '.join(report['resources'])
+        output.append(f'resources:          {res}')
+        output.append(f'provisioning:       {report["provisioning"]}')
+        output.append(f'usecase:            {report["usecase"]}')
+        output.append(f'policy:             {policy_info}')
+        output.append(f'compatibility:      {report["compatibility"]}')
+        output.append(f'preferred inbound:  {preferred_inbound}')
+        output.append(f'preferred outbound: {preferred_outbound}')
+
+        if verbose:
+            output.append('report:')
+            output.append(self.format_compatibilities_general(report["compatibility_report"], indent='  ', policy_report=True, preferred_license=preferred_inbound))
+        return "\n".join(output)
+
+    def format_compatibilities(self, compat, verbose=False):
         output = []
         output.append(f'outbound:      {compat["outbound"]}')
         output.append(f'inbound:       {compat["inbound"]}')
@@ -191,8 +255,9 @@ class TextLicompToolkitFormatter(LicompToolkitFormatter):
         output.append(f'provisioning:  {compat["provisioning"]}')
         output.append(f'usecase:       {compat["usecase"]}')
         output.append(f'compatibility: {compat["compatibility"]}')
-        output.append('report:')
-        output.append(self.format_compatibilities_object(compat["compatibility_report"], '  '))
+        if verbose:
+            output.append('report:')
+            output.append(self.format_compatibilities_general(compat["compatibility_report"], '  ', policy_report=False))
 
         return "\n".join(output)
 
@@ -204,13 +269,6 @@ class TextLicompToolkitFormatter(LicompToolkitFormatter):
         return '\n'.join(res)
 
     def format_display_compatibilities(self, compats):
-        # possible compats are:
-        # no (red)
-        # yes (green)
-        # depends (yellow)
-        # unsupported (yellow)
-        # unknown (yellow)
-        # mixed (yellow)
         display_compats = self._pre_format_display_compatibilities(compats)
         licenses = list(display_compats.keys())
 
@@ -231,7 +289,7 @@ class DotLicompToolkitFormatter(LicompToolkitFormatter):
         }
         _color_map = {
             'yes': 'darkgreen',
-            'no': 'darkred'
+            'no': 'darkred',
         }
         same = True
         value = None
@@ -256,20 +314,15 @@ class DotLicompToolkitFormatter(LicompToolkitFormatter):
     def _license_license_compat(self, outbound, inbound, outbound_compat, inbound_compat):
         out_line, out_color = self._compat_line_color(outbound_compat)
         in_line, in_color = self._compat_line_color(inbound_compat)
+        BR_START = '['
+        BR_END = ']'
         if out_line == in_line and out_color == in_color:
-            return (f'    "{outbound}" -> "{inbound}" [dir="both" color="{out_color}" {out_line}]')
+            return (f'    "{outbound}" -> "{inbound}" {BR_START}dir="both" color="{out_color}" {out_line}{BR_END}')
         else:
-            return '\n'.join([f'    "{outbound}" -> "{inbound}" [color="{out_color}" {out_line}]',
-                              f'    "{inbound}" -> "{outbound}" [color="{in_color}" {in_line}]'])
+            return '\n'.join([f'    "{outbound}" -> "{inbound}" {BR_START}color="{out_color}" {out_line}{BR_END}',
+                              f'    "{inbound}" -> "{outbound}" {BR_START}color="{in_color}" {in_line}{BR_END}'])
 
-    def format_display_compatibilities(self, compats, settings={}):
-        # possible compats are:
-        # no (red)
-        # yes (green)
-        # depends (yellow)
-        # unsupported (yellow)
-        # unknown (yellow)
-        # mixed (yellow)
+    def format_display_compatibilities(self, compats, settings={}): # noqa: B006
         display_compats = self._pre_format_display_compatibilities(compats)
         licenses = list(display_compats.keys())
 

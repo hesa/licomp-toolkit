@@ -4,6 +4,7 @@
 
 licomp_toolkit_version = '0.5.18'
 my_supported_api_version = '0.5'
+licomp_toolkit_file_version = '0.5'
 
 cli_name = 'licomp-toolkit'
 module_name = 'licomp_toolkit'
