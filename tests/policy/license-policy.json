@@ -1,0 +1,22 @@
+{
+  "meta": {
+    "tool": "licomp-toolkit",
+    "file": "license-policy-file"
+  },
+  "policy": {
+    "allowed": [
+      "MIT",
+      "BSD-3-Clause",
+      "GPL-2.0-only",
+      "LGPL-2.1-only",
+      "0BSD"
+    ],
+    "avoided": [
+      "BSD-4-Clause"
+    ],
+    "denied": [
+      "BSD-2-Clause-Patent"
+    ]
+  }
+}
+
