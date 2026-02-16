@@ -27,6 +27,6 @@ Files: README.md docs/*.md
 Copyright: Henrik Sandklef
 License: GPL-3.0-or-later
 
-Files: tests/policy/license-policy.json
+Files: tests/policy/license-policy.json tests/policy/bad-license-policy.json
 Copyright: Henrik Sandklef
 License: GPL-3.0-or-later
