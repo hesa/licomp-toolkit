@@ -6,7 +6,7 @@
 
 LT_VERSION=$(grep licomp_toolkit_version licomp_toolkit/config.py | cut -d = -f 2 | sed "s,[' ]*,,g")
 
-EXTRACT_COMPAT=".compatibility_report.compatibility_object.compatibility_details"
+EXTRACT_COMPAT=".compatibility_report.compatibility_details"
 
 if [ "$1" == "--local" ]
 then
