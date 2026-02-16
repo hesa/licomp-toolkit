@@ -11,7 +11,6 @@ import sys
 
 from licomp.interface import LicompException
 
-from licomp_toolkit.exception import LicompToolkitException
 from licomp_toolkit.return_codes import LicompToolkitReturnCodes
 from licomp_toolkit.toolkit import LicompToolkit
 from licomp_toolkit.toolkit import ExpressionExpressionChecker
@@ -25,6 +24,7 @@ from licomp_toolkit.schema_checker import LicompToolkitSchemaChecker
 from licomp_toolkit.suggester import OutboundSuggester
 from licomp_toolkit.display_compatibility import DisplayCompatibility
 from licomp_toolkit.utils import resources_to_use
+from licomp_toolkit.utils import default_resources
 from licomp_toolkit.license_policy import LicensePolicyHandler
 
 from licomp.main_base import LicompParser
@@ -63,26 +63,34 @@ class LicompToolkitParser(LicompParser):
                     err_code = LicompToolkitReturnCodes.LICOMP_TOOLKIT_INVALID_FILE.value
                     return None, err_code, err_msg
                 return report, ReturnCodes.LICOMP_OK.value, None
-        except (FileNotFoundError, JSONDecodeError) as e:
-            err_msg = f'File "{args.report_file}" not found or not in JSON format'
+        except (FileNotFoundError, JSONDecodeError):
+            err_msg = f'File "{report_file}" not found or not in JSON format'
             err_code = LicompToolkitReturnCodes.LICOMP_TOOLKIT_INVALID_FILE.value
             return None, err_code, err_msg
-        except (KeyError) as e:
+        except (KeyError):
             err_msg = f'File "{report_file}" not in Licomp Toolkit\'s license policy format.'
             err_code = LicompToolkitReturnCodes.LICOMP_TOOLKIT_INVALID_FILE.value
             return None, err_code, err_msg
-    
+
     def apply_license_policy(self, args):
         report, err_code, err_msg = self._read_report_file(args.report_file)
         if err_code != ReturnCodes.LICOMP_OK.value:
             return None, err_code, err_msg
-        lph = LicensePolicyHandler(policy_file=args.license_policy_file)
+        if args.resources:
+            logging.warning(f'User specified resources are ignored. Using the resources as specified in the report file ("{args.report_file}").')
+        resources = report['resources']
+        usecase = report['usecase']
+        provisioning = report['provisioning']
+        lph = LicensePolicyHandler(policy_file=args.license_policy_file,
+                                   resources=resources,
+                                   usecase=usecase,
+                                   provisioning=provisioning)
         policy_report = lph.apply_policy(report, ignore_missing=True)
-        ret_code = compatibility_status_to_returncode(report['compatibility'])
+        ret_code = compatibility_status_to_returncode(policy_report['compatibility'])
         formatter = LicompToolkitFormatter.formatter(self.args.output_format)
         formatted_report = formatter.format_policy_report(report, verbose=args.verbose)
         return formatted_report, ret_code, False
-    
+
     def verify(self, args):
         formatter = LicompToolkitFormatter.formatter(self.args.output_format)
         try:
@@ -107,7 +115,12 @@ class LicompToolkitParser(LicompParser):
                 if args.license_policy_file:
                     lph = LicensePolicyHandler(policy_file=args.license_policy_file)
                 else:
-                    lph = LicensePolicyHandler()
+                    resources, unsupported = resources_to_use(args)
+                    if unsupported:
+                        return f'Resource(s) {", ".join(unsupported)} is/are not supported', ReturnCodes.LICOMP_UNSUPPORTED_RESOURCE.value, True
+                    lph = LicensePolicyHandler(resources=resources,
+                                               usecase=args.usecase,
+                                               provisioning=args.provisioning)
                 policy_report = lph.apply_policy(compatibilities)
                 return formatter.format_policy_report(policy_report, verbose=args.verbose), ret_code, False
             else:
@@ -173,11 +186,14 @@ class LicompToolkitParser(LicompParser):
         if args.all_licenses:
             licenses_to_check = self.licomp_toolkit.supported_licenses()
 
+        resources, unsupported = resources_to_use(args)
+        if unsupported:
+            return f'Resource(s) {", ".join(unsupported)} is/are not supported', ReturnCodes.LICOMP_UNSUPPORTED_RESOURCE.value, True
         candidates = suggester.compat_licenses(args.license_expression,
                                                args.usecase,
                                                args.provisioning,
                                                licenses_to_check,
-                                               args.resources)
+                                               resources)
         if args.least_compatible:
             candidates.reverse()
 
@@ -187,10 +203,13 @@ class LicompToolkitParser(LicompParser):
 
     def display_compatibility(self, args):
         display_compat = DisplayCompatibility(self.licomp_toolkit)
+        resources, unsupported = resources_to_use(args)
+        if unsupported:
+            return f'Resource(s) {", ".join(unsupported)} is/are not supported', ReturnCodes.LICOMP_UNSUPPORTED_RESOURCE.value, True
         compats = display_compat.display_compatibility(args.licenses,
                                                        UseCase.string_to_usecase(args.usecase),
                                                        Provisioning.string_to_provisioning(args.provisioning),
-                                                       args.resources)
+                                                       resources)
         formatter = LicompToolkitFormatter.formatter(args.output_format)
         formatted = formatter.format_display_compatibilities(compats,
                                                              {'discard_unsupported': args.discard_unsupported_licenses})
@@ -219,8 +238,8 @@ def main():
     parser.add_argument('-r', '--resources',
                         type=str,
                         action='append',
-                        help='use specified licomp resource. For a list use the commands \'supported-resources\'. Use \'all\' to use all',
-                        default=['licomp_reclicense', 'licomp_osadl'])
+                        help=f'use specified licomp resource. For a list use the commands \'supported-resources\'. Use \'all\' to use all. Default: {", ".join(default_resources())}',
+                        default=[])
 
     parser.add_argument('-nv', '--no-verbose',
                         action='store_true',
@@ -230,8 +249,7 @@ def main():
     parser_v = subparsers.choices['verify']
     parser_v.add_argument("--apply-license-policy", action='store_true', help='Apply license policy', default=False)
     parser_v.add_argument("--license-policy-file", type=str, help='License policy file. Defaults to use default license policy.', default=None)
-    
-    
+
     # Commands
     parser_si = subparsers.add_parser('simplify', help='Normalize and simplify a license expression')
     parser_si.set_defaults(which="simplify", func=lct_parser.simplify)
