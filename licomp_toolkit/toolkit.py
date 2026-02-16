@@ -253,7 +253,6 @@ class LicenseExpressionChecker():
                             detailed_report=True):
 
         compat_object = {
-#            INBOUND_COMPATIBILITY_TYPE: parsed_expression[COMPATIBILITY_TYPE],
             'compatibility_check': f'outbound-{self.le_parser.parse_license_expression(outbound)["compatibility_type"]} -> inbound-{parsed_expression["compatibility_type"]}',
             'check_class': __class__.__name__,
         }
@@ -274,7 +273,7 @@ class LicenseExpressionChecker():
             compat_object['inbound_license'] = lic
             compat_object['outbound_license'] = outbound
             compat_object['compatibility_object'] = {}
-            
+
         else:
             operator = parsed_expression['operator']
             operands = parsed_expression['operands']
@@ -288,7 +287,7 @@ class LicenseExpressionChecker():
                 operand_compat = self.check_compatibility(outbound, operand, usecase, provisioning, resources, detailed_report=detailed_report)
                 operand_object = {
                     'compatibility_object': operand_compat,
-                    'compatibility': operand_compat['compatibility']
+                    'compatibility': operand_compat['compatibility'],
                 }
                 operands_object.append(operand_object)
 
@@ -357,9 +356,9 @@ class ExpressionExpressionChecker():
         return {
             'tool': module_name,
             'file': 'verification',
-            'file_version': licomp_toolkit_file_version
+            'file_version': licomp_toolkit_file_version,
         }
-        
+
     def check_compatibility(self, outbound, inbound, usecase, provisioning, resources=None, detailed_report=True):
 
         # Check usecase
@@ -421,7 +420,7 @@ class ExpressionExpressionChecker():
             'compatibility': compatibility_object['compatibility'],
             'compatibility_report': compatibility_object,
             'unavailable_resources': unavailable_resources,
-            'available_resources': available_resources
+            'available_resources': available_resources,
         }
 
     def __check_compatibility(self,
@@ -434,7 +433,6 @@ class ExpressionExpressionChecker():
 
         outbound_type = outbound_parsed[COMPATIBILITY_TYPE]
         compat_object = {
-#            OUTBOUND_COMPATIBILITY_TYPE: outbound_type,
             'inbound_license': self.le_parser.to_string(inbound_parsed),
             'outbound_license': self.le_parser.to_string(outbound_parsed),
             'check_class': __class__.__name__,
@@ -442,18 +440,9 @@ class ExpressionExpressionChecker():
 
         if outbound_type == 'license':
             if False:
-                # TODO: REMOVE HERE?
                 compat_object['compatibility_check'] = f'outbound-license -> inbound-{inbound_parsed["compatibility_type"]} HERE?'
                 outbound_parsed_license = outbound_parsed['license']
-                compat_object['HENRIK_TESTS'] = 'MONKEY BALLS'
 
-                # TODO: SHOULD operator/operands be added????  SEEMS LIKE NO
-                #compat_object['operator'] = inbound_parsed['operator']
-                #compat_object['operands'] = inbound_parsed['operands']
-                # Check if:
-                #    outbound license
-                #    is compatible with
-                #    inbound license
                 compat = self.le_checker.check_compatibility(outbound_parsed_license,
                                                              inbound_parsed,
                                                              usecase,
@@ -464,7 +453,6 @@ class ExpressionExpressionChecker():
                 compat_object['compatibility_object'] = compat
                 compat_object['compatibility_details'] = None
 
-            # TODO: CHECK IF ABOVE CAN BE REMOVED
             outbound_parsed_license = outbound_parsed['license']
             compat = self.le_checker.check_compatibility(outbound_parsed_license,
                                                          inbound_parsed,
@@ -473,7 +461,6 @@ class ExpressionExpressionChecker():
                                                          resources,
                                                          detailed_report)
             compat_object = compat
-            
 
         elif outbound_type == 'expression':
             compat_object['compatibility_details'] = None
