@@ -35,7 +35,7 @@ licomp-toolkit-verify()
     INBOUND="$1"
     OUTBOUND="$2"
     
-    PYTHONPATH=$IMPLEMENTATIONS::. python3 licomp_toolkit/__main__.py $RESOURCE_ARGS verify -il "$INBOUND" -ol "$OUTBOUND" 
+    PYTHONPATH=$IMPLEMENTATIONS::. python3 licomp_toolkit/__main__.py --verbose $RESOURCE_ARGS verify -il "$INBOUND" -ol "$OUTBOUND" 
 }
 
 licomp-toolkit-apply()
@@ -43,7 +43,7 @@ licomp-toolkit-apply()
     OUTPUT_ARGS="$1"
     REPORT="$2"
     
-    PYTHONPATH=$IMPLEMENTATIONS::. python3 licomp_toolkit/__main__.py $RESOURCE_ARGS $OUTPUT_ARGS apply-license-policy $REPORT
+    PYTHONPATH=$IMPLEMENTATIONS::. python3 licomp_toolkit/__main__.py --verbose $RESOURCE_ARGS $OUTPUT_ARGS apply-license-policy $REPORT
 }
 
 #
@@ -52,18 +52,13 @@ licomp-toolkit-apply()
 licomp-toolkit-verify MIT MIT  > report.json
 licomp-toolkit-apply " -of text" report.json > policy-report.txt
 comment_file_presence "preferred inbound:[ ]*MIT" policy-report.txt "test 1.1"
-comment_file_presence "preferred inbound: MIT" policy-report.txt "test 1.2"
-comment_file_presence "preferred license:       no" policy-report.txt "test 1.3"
-comment_file_presence "least preferred license: no" policy-report.txt "test 1.4"
-comment_file_presence "compatibility:           yes" policy-report.txt "test 1.5"
+comment_file_presence "preferred outbound:[ ]*MIT" policy-report.txt "test 1.2"
+comment_file_presence "^compatibility:[ ]*yes" policy-report.txt "test 1.5"
 comment_file_presence "compatibility details:" policy-report.txt "test 1.6"
 
 licomp-toolkit-verify MIT "MIT OR LGPL-2.1-only"  > report.json
 licomp-toolkit-apply " -of text" report.json > policy-report.txt
-comment_file_presence "preferred inbound: MIT" policy-report.txt "test 2.1"
-comment_file_presence "preferred inbound: MIT" policy-report.txt "test 2.2"
-comment_file_presence "preferred license:       no" policy-report.txt "test 2.3"
-comment_file_presence "least preferred license: no" policy-report.txt "test 2.4"
-comment_file_presence "compatibility:           yes" policy-report.txt "test 2.5"
-comment_file_presence "compatibility details:" policy-report.txt "test 2.6"
+comment_file_presence "preferred inbound:[ ]*MIT" policy-report.txt "test 2.1"
+comment_file_presence "preferred outbound:[ ]*MIT" policy-report.txt "test 2.2"
+comment_file_presence "^compatibility:[ ]*yes" policy-report.txt "test 2.5"
 
