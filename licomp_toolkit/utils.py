@@ -54,14 +54,20 @@ def _inc_map(_map, _name):
 def resource_avilable(resource, licomp_toolkit):
     return resource in licomp_toolkit.licomp_resources().keys()
 
+def default_resources():
+    return ['licomp_osadl', 'licomp_reclicense']
+
+
 def resources_to_use(args):
     lt = LicompToolkit()
     resources = args.resources
-    new_resources = []
-    unsupported = []
-    if args.resources == ['all']:
+    new_resources = set()
+    unsupported = set()
+    if 'all' in args.resources:
         new_resources = list(lt.licomp_resources().keys())
         return new_resources, []
+    if not args.resources:
+        return default_resources(), []
     for resource in resources:
         if 'licomp' not in resource:
             resource = f'licomp_{resource}'
@@ -69,7 +75,7 @@ def resources_to_use(args):
             resource = resource.replace('-', '_')
 
         if not resource_avilable(resource, lt):
-            unsupported.append(resource)
+            unsupported.add(resource)
         else:
-            new_resources.append(resource)
-    return new_resources, unsupported
+            new_resources.add(resource)
+    return list(new_resources), list(unsupported)
