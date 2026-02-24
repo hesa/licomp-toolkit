@@ -134,12 +134,12 @@ class OutboundSuggester:
                                                   usecase,
                                                   provisioning,
                                                   resources)
+                if ret['compatibility'] == 'yes':
+                    compats.append(lic)
+                    logging.debug(f' appending: {lic}')
             except Exception as e:
                 logging.debug(f'Exception caught: {e}')
                 logging.debug(traceback.format_exc())
-            if ret['compatibility'] == 'yes':
-                compats.append(lic)
-                logging.debug(f' appending: {lic}')
 
         # decorate compat list with indices (from rankings)
         decorated = [(self.__compat_index(lic, usecase, provisioning), lic) for lic in compats]
