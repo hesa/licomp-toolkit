@@ -1,5 +1,0 @@
-digraph depends {
-    graph [label="License Compatibility Graph (library)" labelloc=t]
-    node [shape=plaintext]
-    "MIT" -> "BSD-3-Clause" [dir="both" color="darkgreen" ]
-}
