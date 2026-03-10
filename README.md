@@ -1,3 +1,5 @@
+# We have moved to [codeberg](https://codeberg.org). Our new home: [codeberg.org/software-compliance-org/licomp-toolkit](https://codeberg.org/software-compliance-org/licomp-toolkit)
+
 # Licomp Toolkit
 
 Licomp toolkit is a license compatiblity tool using miscellaneous
